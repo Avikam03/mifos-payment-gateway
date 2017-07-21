@@ -20,7 +20,8 @@ public enum BeyonicPaymentState {
     SCHEDULED(7, "scheduled"),
     PROCESSED(8, "processed"),
     PROCESSED_WITH_ERRORS(9, "processed_with_errors"),
-    CANCELLED(10, "cancelled");
+    CANCELLED(10, "cancelled"),
+    COMPLETED(11, "completed");
 
     private final Integer value;
     private final String code;
@@ -63,6 +64,9 @@ public enum BeyonicPaymentState {
             case 10:
                 enumeration = BeyonicPaymentState.CANCELLED;
                 break;
+            case 11:
+                enumeration = BeyonicPaymentState.COMPLETED;
+                break;
         }
 
         return enumeration;
@@ -100,6 +104,9 @@ public enum BeyonicPaymentState {
                 break;
             case "cancelled":
                 enumeration = BeyonicPaymentState.CANCELLED;
+                break;
+            case "completed":
+                enumeration = BeyonicPaymentState.COMPLETED;
                 break;
         }
 

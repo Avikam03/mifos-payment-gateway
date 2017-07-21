@@ -52,3 +52,15 @@ INSERT INTO configuration (reference_id, reference_type, config_name, config_val
 config_category, last_modified_dtm, last_modified_by_id)
 VALUES (1, 'MMP', 'api-token', '', 2, NOW(), 1);
 
+--
+-- Add category for statuses
+--
+INSERT INTO category (category_name, last_modified_dtm, last_modified_by_id)
+VALUES ('payment_api_status', NOW(), 2);
+
+INSERT INTO category (category_name, last_modified_dtm, last_modified_by_id)
+VALUES ('system_status', NOW(), 2);
+
+INSERT INTO category (category_name, last_modified_dtm, last_modified_by_id)
+VALUES ('payment_status', NOW(), 2);
+

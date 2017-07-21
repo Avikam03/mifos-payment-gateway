@@ -329,6 +329,8 @@ CREATE TABLE `outbound_request` (
   `transaction_type` enum('disbursement','withdrawal') NOT NULL,
   `mfi_id` bigint(20) NOT NULL,
   `mmp_id` bigint(20) NOT NULL,
+  `payment_method` varchar(100) NOT NULL,
+  `payment_method_type` varchar(100) NOT NULL,
   `source_reference` varchar(45) NOT NULL,
   `destination_reference` varchar(45) NOT NULL,
   `fineract_account_number` varchar(45) NOT NULL,

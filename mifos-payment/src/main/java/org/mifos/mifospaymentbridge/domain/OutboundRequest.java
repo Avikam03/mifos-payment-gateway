@@ -10,6 +10,8 @@
 package org.mifos.mifospaymentbridge.domain;
 
 import org.joda.time.DateTime;
+import org.mifos.mifospaymentbridge.Util.TransactionType;
+
 import javax.persistence.Column;
 import javax.persistence.Table;
 import javax.persistence.Entity;
@@ -20,10 +22,6 @@ import javax.persistence.Id;
 @Entity
 @Table(name="outbound_request")
 public class OutboundRequest{
-    //Creation of TransactionType type
-    public enum TransactionType{
-        DISBURSEMENT, WITHDRAWAL
-    }
 
     /**
      * table Fields of the OutboundRequest table
@@ -35,6 +33,12 @@ public class OutboundRequest{
 
     @Column(name="transaction_type")
     private TransactionType transactType;
+
+    @Column(name="payment_method")
+    private String paymentMethod;
+
+    @Column(name="payment_method_type")
+    private String paymentMethodType;
 
     @Column(name="mmp_id")
     private Long mmpId;
@@ -115,6 +119,38 @@ public class OutboundRequest{
      */
     public void setTransactType(TransactionType transactType) {
         this.transactType = transactType;
+    }
+
+    /**
+     * Gets the payment method of this request
+     * @return paymentMethod
+     */
+    public String getPaymentMethod() {
+        return paymentMethod;
+    }
+
+    /**
+     * Sets the paymentMethod of the request
+     * @param paymentMethod
+     */
+    public void setPaymentMethod(String paymentMethod) {
+        this.paymentMethod = paymentMethod;
+    }
+
+    /**
+     * Gets the payment method type(wave, beyonic)
+     * @return paymentMethodType
+     */
+    public String getPaymentMethodType() {
+        return paymentMethodType;
+    }
+
+    /**
+     * Set the paymentMethodType for a request
+     * @param paymentMethodType
+     */
+    public void setPaymentMethodType(String paymentMethodType) {
+        this.paymentMethodType = paymentMethodType;
     }
 
     /**

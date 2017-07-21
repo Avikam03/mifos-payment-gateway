@@ -12,7 +12,6 @@ package org.mifos.mifospaymentbridge.services;
 import org.mifos.mifospaymentbridge.model.Status;
 import org.mifos.mifospaymentbridge.repository.StatusRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-
 import java.util.List;
 
 public class StatusService {

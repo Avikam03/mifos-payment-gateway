@@ -8,6 +8,7 @@
 
 package org.mifos.mifospaymentbridge.repository;
 
+import org.mifos.mifospaymentbridge.Util.TransactionType;
 import org.springframework.data.repository.CrudRepository;
 import org.mifos.mifospaymentbridge.model.OutboundTransactionLog;
 import java.util.List;
@@ -25,5 +26,8 @@ public interface OutboundTransactionLogRepository extends CrudRepository<Outboun
 
     void deleteById(Long id);
 
-    List<OutboundTransactionLog> findByTransactType(OutboundTransactionLog.TransactionType transactionType);
+    List<OutboundTransactionLog> findByTransactType(TransactionType transactionType);
+
+    OutboundTransactionLog findByOutboundRequestId(Long id);
+
 }

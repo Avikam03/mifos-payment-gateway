@@ -8,6 +8,7 @@
 package org.mifos.mifospaymentbridge.model;
 
 import org.joda.time.DateTime;
+import org.mifos.mifospaymentbridge.Util.TransactionType;
 import javax.persistence.Column;
 import javax.persistence.Table;
 import javax.persistence.Entity;
@@ -18,12 +19,6 @@ import javax.persistence.Id;
 @Entity
 @Table(name = "outbound_transaction_log")
 public class OutboundTransactionLog{
-
-    //Creation of TransactionType type
-    public static enum TransactionType{
-        DISBURSEMENT, WITHDRAWAL, REVERSAL
-    }
-
     /**
      * table Fields of the outbound_transaction_log_id table
      */
