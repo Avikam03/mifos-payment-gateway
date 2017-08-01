@@ -11,8 +11,11 @@ package org.mifos.mifospaymentbridge.services;
 import org.mifos.mifospaymentbridge.model.GatewayUser;
 import org.mifos.mifospaymentbridge.repository.GatewayUserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
 import java.util.List;
 
+@Service
 public class GatewayUserService {
     @Autowired
     private GatewayUserRepository gatewayUserRepository;

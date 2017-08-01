@@ -13,7 +13,7 @@ import org.mifos.mifospaymentbridge.model.Configuration;
 import java.util.List;
 
 public interface ConfigurationRepository extends CrudRepository<Configuration, Long>{
-    Configuration findOne(Long id);
+    /*Configuration findOne(Long id);
 
     List<Configuration> findAll();
 
@@ -23,7 +23,7 @@ public interface ConfigurationRepository extends CrudRepository<Configuration, L
 
     boolean exists(Long id);
 
-    void deleteById(Long id);
+    void deleteById(Long id);*/
 
     List<Configuration> findByConfigNameIgnoreCase(String configName);
 

@@ -14,7 +14,7 @@ import org.mifos.mifospaymentbridge.model.MobileMoneyProvider;
 import java.util.List;
 
 public interface MobileMoneyProviderRepository extends CrudRepository<MobileMoneyProvider, Long>{
-    MobileMoneyProvider findOne(Long id);
+    /*MobileMoneyProvider findOne(Long id);
 
     List<MobileMoneyProvider> findAll();
 
@@ -26,5 +26,5 @@ public interface MobileMoneyProviderRepository extends CrudRepository<MobileMone
 
     void deleteById(Long id);
 
-    List<MobileMoneyProvider> findByNameIgnoreCase(String name);
+    List<MobileMoneyProvider> findByNameIgnoreCase(String name); */
 }

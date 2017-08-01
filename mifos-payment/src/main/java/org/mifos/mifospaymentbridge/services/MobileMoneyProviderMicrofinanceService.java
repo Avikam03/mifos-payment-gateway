@@ -12,9 +12,11 @@ package org.mifos.mifospaymentbridge.services;
 import org.mifos.mifospaymentbridge.model.MobileMoneyProviderMicrofinance;
 import org.mifos.mifospaymentbridge.repository.MobileMoneyProviderMicrofinanceRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Service
 public class MobileMoneyProviderMicrofinanceService {
 
     @Autowired

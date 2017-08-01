@@ -13,7 +13,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.joda.time.DateTime;
 import lombok.Data;
 
-@lombok.Data
+@Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class PaymentData {
 
@@ -33,7 +33,7 @@ public class PaymentData {
 
     private String[] phone_nos;
 
-    private BeyonicPaymentState state;
+    private String state;
 
     private String last_error;
 

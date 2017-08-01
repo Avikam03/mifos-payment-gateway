@@ -1,14 +1,14 @@
 /**
- * LoanDisbursementController.java
- * =======================================
- * @RestController that handles all http requests
- * for loan disbursement via the payment gateway
- * @author vladimir fomene
+ * WithdrawalController.java
+ * ========================================
+ * This controller handles all withdrawals via the
+ * payment gateway.
  */
 
 package org.mifos.mifospaymentbridge.controller;
 
-import org.joda.time.DateTime;
+
+import com.fasterxml.jackson.databind.jsonFormatVisitors.JsonArrayFormatVisitor;
 import org.mifos.mifospaymentbridge.Constant.GatewayConstants;
 import org.mifos.mifospaymentbridge.PaymentProviders.Beyonic.PaymentRequest;
 import org.mifos.mifospaymentbridge.PaymentProviders.Beyonic.PaymentResponse;
@@ -16,8 +16,8 @@ import org.mifos.mifospaymentbridge.PaymentProviders.Beyonic.PaymentService;
 import org.mifos.mifospaymentbridge.Util.HostConfig;
 import org.mifos.mifospaymentbridge.Util.TransactionType;
 import org.mifos.mifospaymentbridge.domain.DisbursementWithDrawalRequest;
-import org.mifos.mifospaymentbridge.model.OutboundRequest;
 import org.mifos.mifospaymentbridge.model.MobileMoneyProvider;
+import org.mifos.mifospaymentbridge.model.OutboundRequest;
 import org.mifos.mifospaymentbridge.model.OutboundTransactionLog;
 import org.mifos.mifospaymentbridge.model.Status;
 import org.mifos.mifospaymentbridge.services.MobileMoneyProviderService;
@@ -32,17 +32,22 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import retrofit2.Response;
-
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
 import java.io.IOException;
-import java.sql.Date;
 import java.sql.Timestamp;
 
 @RestController
-public class LoanDisbursementController extends BaseController{
+public class WithdrawalController extends BaseController{
+
+    @Autowired
+    private MobileMoneyProviderService mobileMoneyProviderService;
 
     private OutboundRequest outRequest;
+
+    @Autowired
+    private HostConfig hostConfig;
+
+    @Autowired
+    private PaymentService beyonicService;
 
     @Autowired
     private StatusService statusService;
@@ -55,7 +60,7 @@ public class LoanDisbursementController extends BaseController{
 
     private Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    @RequestMapping(value = LOAN_URL, method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE,
+    @RequestMapping(value = WITHDRAWAL_URL, method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE,
             consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<PaymentResponse> disburseLoan(
             @RequestParam(value = "command", required=true, defaultValue = "disburse") String disburse,
@@ -73,7 +78,7 @@ public class LoanDisbursementController extends BaseController{
 
         //Persist disbursement request
         outRequest = new OutboundRequest();
-        outRequest.setTransactType(TransactionType.DISBURSEMENT);
+        outRequest.setTransactType(TransactionType.WITHDRAWAL);
         outRequest.setMfiId(Long.valueOf(mfiId));
         outRequest.setMmpId(Long.valueOf(mmpId));
         outRequest.setPaymentMethod(paymentMethod);

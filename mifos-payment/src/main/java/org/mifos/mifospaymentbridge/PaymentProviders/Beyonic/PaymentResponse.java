@@ -35,7 +35,7 @@ public class PaymentResponse {
 
     private String[] phone_nos;
 
-    private BeyonicPaymentState state;
+    private String state;
 
     private String last_error;
 
@@ -43,23 +43,23 @@ public class PaymentResponse {
 
     private Long rejected_by;
 
-    private DateTime rejected_time;
+    private String rejected_time;
 
     private String cancelled_reason;
 
     private Long cancelled_by;
 
-    private DateTime cancelled_time;
+    private String cancelled_time;
 
-    private DateTime created;
+    private String created;
 
     private Long author;
 
-    private DateTime modified;
+    private String modified;
 
     private String updated_by;
 
-    private DateTime start_date;
+    private String start_date;
 
     private String remote_transaction_id;
 

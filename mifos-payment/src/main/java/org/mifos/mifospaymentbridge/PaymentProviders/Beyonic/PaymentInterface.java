@@ -2,20 +2,11 @@ package org.mifos.mifospaymentbridge.PaymentProviders.Beyonic;
 
 
 import retrofit2.Call;
-import retrofit2.http.FormUrlEncoded;
-import retrofit2.http.POST;
-import retrofit2.http.Part;
-import retrofit2.http.Header;
+import retrofit2.http.*;
 
 public interface PaymentInterface {
 
-    @FormUrlEncoded
+    @Headers("Authorization: Token 71650dd01ae0fd4e3efdfc9764f9d12308b7244f")
     @POST("payments")
-    Call<PaymentResponse> createNewPayment(@Part("phonenumber") String phoneNumber,
-                                         @Part("currency") String currency,
-                                         @Part("amount") Double amount,
-                                         @Part("description") String description,
-                                         @Part("callback_url") String callbackUrl,
-                                         @Part("payment_type") String paymentType,
-                                           @Header("Authorization") String authorization);
+    Call<PaymentResponse> createNewPayment(@Body PaymentRequest request);
 }

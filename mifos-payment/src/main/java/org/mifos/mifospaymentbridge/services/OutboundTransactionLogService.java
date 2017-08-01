@@ -13,9 +13,11 @@ import org.mifos.mifospaymentbridge.Util.TransactionType;
 import org.mifos.mifospaymentbridge.model.OutboundTransactionLog;
 import org.mifos.mifospaymentbridge.repository.OutboundTransactionLogRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Service
 public class OutboundTransactionLogService {
 
     @Autowired

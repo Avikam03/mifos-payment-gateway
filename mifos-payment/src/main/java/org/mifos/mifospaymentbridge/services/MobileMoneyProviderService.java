@@ -12,8 +12,10 @@ package org.mifos.mifospaymentbridge.services;
 import org.mifos.mifospaymentbridge.model.MobileMoneyProvider;
 import org.mifos.mifospaymentbridge.repository.MobileMoneyProviderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import java.util.List;
 
+@Service
 public class MobileMoneyProviderService {
 
     @Autowired
@@ -28,7 +30,7 @@ public class MobileMoneyProviderService {
     }
 
     public List<MobileMoneyProvider> findAll(){
-        return mobileMoneyProviderRepository.findAll();
+        return (List<MobileMoneyProvider>) mobileMoneyProviderRepository.findAll();
     }
 
     public MobileMoneyProvider save(MobileMoneyProvider provider){
@@ -36,18 +38,18 @@ public class MobileMoneyProviderService {
     }
 
     public List<MobileMoneyProvider> save(List<MobileMoneyProvider> providers){
-        return mobileMoneyProviderRepository.save(providers);
+        return (List<MobileMoneyProvider>) mobileMoneyProviderRepository.save(providers);
     }
 
     public boolean exists(Long id){
         return mobileMoneyProviderRepository.exists(id);
     }
 
-    public void deleteById(Long id){
+    /*public void deleteById(Long id){
         mobileMoneyProviderRepository.deleteById(id);
     }
 
     public List<MobileMoneyProvider> findByNameIgnoreCase(String name){
         return mobileMoneyProviderRepository.findByNameIgnoreCase(name);
-    }
+    }*/
 }

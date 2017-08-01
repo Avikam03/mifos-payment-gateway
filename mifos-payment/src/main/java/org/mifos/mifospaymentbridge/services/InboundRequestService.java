@@ -12,8 +12,11 @@ package org.mifos.mifospaymentbridge.services;
 import org.mifos.mifospaymentbridge.model.InboundRequest;
 import org.mifos.mifospaymentbridge.repository.InboundRequestRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
 import java.util.List;
 
+@Service
 public class InboundRequestService {
 
     @Autowired

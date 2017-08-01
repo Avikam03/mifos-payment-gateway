@@ -9,12 +9,10 @@ package org.mifos.mifospaymentbridge.model;
 
 import org.joda.time.DateTime;
 import org.mifos.mifospaymentbridge.Util.TransactionType;
-import javax.persistence.Column;
-import javax.persistence.Table;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
+
+import javax.persistence.*;
+import java.sql.Timestamp;
+
 
 @Entity
 @Table(name = "outbound_transaction_log")
@@ -34,13 +32,14 @@ public class OutboundTransactionLog{
     private String requestIpAddress;
 
     @Column(name="transaction_type")
+    @Enumerated(EnumType.STRING)
     private TransactionType transactType;
 
     @Column(name="transaction_status_id")
     private Integer transactionStatusId;
 
     @Column(name="transaction_dtm")
-    private DateTime transactionDtm;
+    private Timestamp transactionDtm;
 
     /**
      * Get the id of the log
@@ -126,7 +125,7 @@ public class OutboundTransactionLog{
      * Get transaction datetime
      * @return transactionDtm
      */
-    public DateTime getTransactionDtm() {
+    public Timestamp getTransactionDtm() {
         return transactionDtm;
     }
 
@@ -134,7 +133,7 @@ public class OutboundTransactionLog{
      * Set transaction datetime
      * @param transactionDtm
      */
-    public void setTransactionDtm(DateTime transactionDtm) {
+    public void setTransactionDtm(Timestamp transactionDtm) {
         this.transactionDtm = transactionDtm;
     }
 }

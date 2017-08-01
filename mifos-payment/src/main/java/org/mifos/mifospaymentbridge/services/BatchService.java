@@ -13,9 +13,11 @@ package org.mifos.mifospaymentbridge.services;
 import org.mifos.mifospaymentbridge.model.Batch;
 import org.mifos.mifospaymentbridge.repository.BatchRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-
+import org.springframework.stereotype.Service;
 import java.util.List;
 
+
+@Service
 public class BatchService {
     @Autowired
     private BatchRepository batchRepository;

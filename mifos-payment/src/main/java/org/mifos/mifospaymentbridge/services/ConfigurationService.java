@@ -13,8 +13,11 @@ package org.mifos.mifospaymentbridge.services;
 import org.mifos.mifospaymentbridge.model.Configuration;
 import org.mifos.mifospaymentbridge.repository.ConfigurationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
 import java.util.List;
 
+@Service
 public class ConfigurationService {
 
     @Autowired
@@ -29,14 +32,14 @@ public class ConfigurationService {
     }
 
     public List<Configuration> findAll(){
-        return configurationRepository.findAll();
+        return (List<Configuration>) configurationRepository.findAll();
     }
 
     public Configuration save(Configuration config){
         return configurationRepository.save(config);
     }
 
-    public List<Configuration> save(List<Configuration> configs){
+    public Iterable<Configuration> save(List<Configuration> configs){
         return configurationRepository.save(configs);
     }
 
@@ -45,7 +48,7 @@ public class ConfigurationService {
     }
 
     public void deleteById(Long id){
-        configurationRepository.deleteById(id);
+        configurationRepository.delete(id);
     }
 
     public List<Configuration> findByConfigNameIgnoreCase(String configName){

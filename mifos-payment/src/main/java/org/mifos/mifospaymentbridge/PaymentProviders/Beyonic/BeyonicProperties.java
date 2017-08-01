@@ -1,21 +1,26 @@
 package org.mifos.mifospaymentbridge.PaymentProviders.Beyonic;
 
 import org.mifos.mifospaymentbridge.services.ConfigurationService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
+
+@Service
 public class BeyonicProperties {
     //Create service to interact with our config database
-    private ConfigurationService providerConfig = new ConfigurationService();
+    @Autowired
+    private ConfigurationService providerConfig;
 
-    //Set Beyonic endpoint and api token from database configuration table values
-    private final String END_POINT = providerConfig.findOne(1L).getConfigValue();
-    private final String API_TOKEN = providerConfig.findOne(2L).getConfigValue();
+
+    public BeyonicProperties() {
+    }
 
     /**
      * return beyonic api endpoint
      * @return END_POINT
      */
     public String getEND_POINT() {
-        return END_POINT;
+        return providerConfig.findOne(1L).getConfigValue();
     }
 
     /**
@@ -23,6 +28,6 @@ public class BeyonicProperties {
      * @return API_TOKEN
      */
     public String getAPI_TOKEN() {
-        return API_TOKEN;
+        return providerConfig.findOne(2L).getConfigValue();
     }
 }
