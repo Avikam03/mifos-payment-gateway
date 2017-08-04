@@ -8,19 +8,13 @@
 
 package org.mifos.mifospaymentbridge.controller;
 
-import org.joda.time.DateTime;
 import org.mifos.mifospaymentbridge.Constant.GatewayConstants;
-import org.mifos.mifospaymentbridge.PaymentProviders.Beyonic.PaymentRequest;
 import org.mifos.mifospaymentbridge.PaymentProviders.Beyonic.PaymentResponse;
-import org.mifos.mifospaymentbridge.PaymentProviders.Beyonic.PaymentService;
-import org.mifos.mifospaymentbridge.Util.HostConfig;
 import org.mifos.mifospaymentbridge.Util.TransactionType;
-import org.mifos.mifospaymentbridge.domain.DisbursementWithDrawalRequest;
+import org.mifos.mifospaymentbridge.domain.DisbursementRequest;
 import org.mifos.mifospaymentbridge.model.OutboundRequest;
-import org.mifos.mifospaymentbridge.model.MobileMoneyProvider;
 import org.mifos.mifospaymentbridge.model.OutboundTransactionLog;
 import org.mifos.mifospaymentbridge.model.Status;
-import org.mifos.mifospaymentbridge.services.MobileMoneyProviderService;
 import org.mifos.mifospaymentbridge.services.OutboundRequestService;
 import org.mifos.mifospaymentbridge.services.OutboundTransactionLogService;
 import org.mifos.mifospaymentbridge.services.StatusService;
@@ -33,10 +27,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import retrofit2.Response;
 
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import java.io.IOException;
-import java.sql.Date;
 import java.sql.Timestamp;
 
 @RestController
@@ -69,7 +59,7 @@ public class LoanDisbursementController extends BaseController{
             @RequestParam(value="comments", required=false) String comments,
             @RequestParam(value="request_ip_address", required=false, defaultValue = "127.0.0.1") String reqIpAddr,
             @PathVariable(value = "loanId") Long id,
-            @RequestBody DisbursementWithDrawalRequest request){
+            @RequestBody DisbursementRequest request){
 
         //Persist disbursement request
         outRequest = new OutboundRequest();

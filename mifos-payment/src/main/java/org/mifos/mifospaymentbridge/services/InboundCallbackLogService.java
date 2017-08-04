@@ -30,7 +30,7 @@ public class InboundCallbackLogService {
         return inboundCallbackLogRepository.findOne(id);
     }
 
-    public List<InboundCallbackLog> findAll(){
+    public Iterable<InboundCallbackLog> findAll(){
         return inboundCallbackLogRepository.findAll();
     }
 
@@ -46,8 +46,8 @@ public class InboundCallbackLogService {
         return inboundCallbackLogRepository.exists(id);
     }
 
-    public void deleteById(Long id){
-        inboundCallbackLogRepository.deleteById(id);
+    public void delete(Long id){
+        inboundCallbackLogRepository.delete(id);
     }
 
     public List<InboundCallbackLog> findByCallbackUrlIgnoreCase(String url){

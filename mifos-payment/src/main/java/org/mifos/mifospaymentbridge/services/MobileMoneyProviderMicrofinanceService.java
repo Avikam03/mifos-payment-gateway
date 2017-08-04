@@ -30,7 +30,7 @@ public class MobileMoneyProviderMicrofinanceService {
         return mobileMoneyProviderMicrofinanceRepository.findOne(id);
     }
 
-    public List<MobileMoneyProviderMicrofinance> findAll(){
+    public Iterable<MobileMoneyProviderMicrofinance> findAll(){
         return mobileMoneyProviderMicrofinanceRepository.findAll();
     }
 
@@ -46,8 +46,8 @@ public class MobileMoneyProviderMicrofinanceService {
         return mobileMoneyProviderMicrofinanceRepository.exists(id);
     }
 
-    public void deleteById(Long id){
-        mobileMoneyProviderMicrofinanceRepository.deleteById(id);
+    public void delete(Long id){
+        mobileMoneyProviderMicrofinanceRepository.delete(id);
     }
 
     public List<MobileMoneyProviderMicrofinance> findByMfiPhoneNumberIgnoreCase(String mfiPhoneNumber){

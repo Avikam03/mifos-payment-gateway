@@ -55,5 +55,7 @@ dependencies {
 	//Add okhttp to get http error response from retrofit
 	compile 'com.squareup.okhttp3:okhttp:3.8.1'
 
+	compile 'com.squareup.okhttp3:logging-interceptor:3.6.0'
+
 	testCompile('org.springframework.boot:spring-boot-starter-test')
 }

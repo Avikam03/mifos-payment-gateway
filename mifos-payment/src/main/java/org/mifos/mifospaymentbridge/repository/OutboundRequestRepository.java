@@ -14,17 +14,8 @@ import org.mifos.mifospaymentbridge.model.OutboundRequest;
 import java.util.List;
 
 public interface OutboundRequestRepository extends CrudRepository<OutboundRequest, Long>{
-    //OutboundRequest findOne(Long id);
-
-    //List<OutboundRequest> findAll();
-
-    //OutboundRequest save(OutboundRequest request);
 
     List<OutboundRequest> save(List<OutboundRequest> requests);
-
-    //boolean exists(Long id);
-
-    //void delete(Long id);
 
     List<OutboundRequest> findBySourceRefIgnoreCase(String ref);
 

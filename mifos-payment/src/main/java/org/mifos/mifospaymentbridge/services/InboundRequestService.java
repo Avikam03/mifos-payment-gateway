@@ -30,7 +30,7 @@ public class InboundRequestService {
         return inboundRequestRepository.findOne(id);
     }
 
-    public List<InboundRequest> findAll(){
+    public Iterable<InboundRequest> findAll(){
         return inboundRequestRepository.findAll();
     }
 
@@ -46,8 +46,8 @@ public class InboundRequestService {
         return inboundRequestRepository.exists(id);
     }
 
-    public void deleteById(Long id){
-        inboundRequestRepository.deleteById(id);
+    public void delete(Long id){
+        inboundRequestRepository.delete(id);
     }
 
     public List<InboundRequest> findBySourceRefIgnoreCase(String ref){

@@ -30,7 +30,7 @@ public class BatchService {
         return batchRepository.findOne(id);
     }
 
-    public List<Batch> findAll(){
+    public Iterable<Batch> findAll(){
         return batchRepository.findAll();
     }
 
@@ -46,8 +46,8 @@ public class BatchService {
         return batchRepository.exists(id);
     }
 
-    public void deleteById(Long id){
-        batchRepository.deleteById(id);
+    public void delete(Long id){
+        batchRepository.delete(id);
     }
 
     public List<Batch> findByTransact_directionIgnoreCase(Batch.TransactionDirection transactionDirection){

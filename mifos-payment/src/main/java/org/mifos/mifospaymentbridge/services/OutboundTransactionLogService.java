@@ -31,7 +31,7 @@ public class OutboundTransactionLogService {
         return outboundTransactionLogRepository.findOne(id);
     }
 
-    public List<OutboundTransactionLog> findAll(){
+    public Iterable<OutboundTransactionLog> findAll(){
         return outboundTransactionLogRepository.findAll();
     }
 
@@ -47,8 +47,8 @@ public class OutboundTransactionLogService {
         return outboundTransactionLogRepository.exists(id);
     }
 
-    public void deleteById(Long id){
-        outboundTransactionLogRepository.deleteById(id);
+    public void delete(Long id){
+        outboundTransactionLogRepository.delete(id);
     }
 
     public List<OutboundTransactionLog> findByTransactTypeIgnoreCase(TransactionType transactionType){

@@ -31,8 +31,8 @@ public class ConfigurationService {
         return configurationRepository.findOne(id);
     }
 
-    public List<Configuration> findAll(){
-        return (List<Configuration>) configurationRepository.findAll();
+    public Iterable<Configuration> findAll(){
+        return configurationRepository.findAll();
     }
 
     public Configuration save(Configuration config){

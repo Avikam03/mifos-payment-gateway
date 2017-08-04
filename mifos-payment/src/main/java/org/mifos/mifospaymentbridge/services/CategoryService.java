@@ -24,6 +24,10 @@ public class CategoryService {
 
     }
 
+    public Iterable<Category> findAll(){
+        return categoryRepository.findAll();
+    }
+
     public Category findOne(Integer id){
         return categoryRepository.findOne(id);
     }
@@ -40,8 +44,8 @@ public class CategoryService {
         return categoryRepository.exists(id);
     }
 
-    public void deleteById(Integer id){
-        categoryRepository.deleteById(id);
+    public void delete(Integer id){
+        categoryRepository.delete(id);
     }
 
     public List<Category> findByCategoryNameIgnoreCase(String categoryName){

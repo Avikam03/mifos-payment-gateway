@@ -29,8 +29,8 @@ public class MobileMoneyProviderService {
         return mobileMoneyProviderRepository.findOne(id);
     }
 
-    public List<MobileMoneyProvider> findAll(){
-        return (List<MobileMoneyProvider>) mobileMoneyProviderRepository.findAll();
+    public Iterable<MobileMoneyProvider> findAll(){
+        return mobileMoneyProviderRepository.findAll();
     }
 
     public MobileMoneyProvider save(MobileMoneyProvider provider){
@@ -45,11 +45,11 @@ public class MobileMoneyProviderService {
         return mobileMoneyProviderRepository.exists(id);
     }
 
-    /*public void deleteById(Long id){
-        mobileMoneyProviderRepository.deleteById(id);
+    public void delete(Long id){
+        mobileMoneyProviderRepository.delete(id);
     }
 
     public List<MobileMoneyProvider> findByNameIgnoreCase(String name){
         return mobileMoneyProviderRepository.findByNameIgnoreCase(name);
-    }*/
+    }
 }

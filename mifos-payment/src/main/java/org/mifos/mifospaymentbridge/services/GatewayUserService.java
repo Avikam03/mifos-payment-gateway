@@ -28,7 +28,7 @@ public class GatewayUserService {
         return gatewayUserRepository.findOne(id);
     }
 
-    public List<GatewayUser> findAll(){
+    public Iterable<GatewayUser> findAll(){
         return gatewayUserRepository.findAll();
     }
 
@@ -44,8 +44,8 @@ public class GatewayUserService {
         return gatewayUserRepository.exists(id);
     }
 
-    public void deleteById(Long id){
-        gatewayUserRepository.deleteById(id);
+    public void delete(Long id){
+        gatewayUserRepository.delete(id);
     }
 
     public List<GatewayUser> findByUsernameIgnoreCase(String userName){

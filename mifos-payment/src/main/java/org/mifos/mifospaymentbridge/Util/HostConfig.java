@@ -10,9 +10,9 @@ package org.mifos.mifospaymentbridge.Util;
 
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
-@Service
+@Component
 public class HostConfig {
 
     @Value("${hostconfig.host-address}")
