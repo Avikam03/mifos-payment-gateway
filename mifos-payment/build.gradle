@@ -57,5 +57,9 @@ dependencies {
 
 	compile 'com.squareup.okhttp3:logging-interceptor:3.6.0'
 
+	//These dependencies are for jms messaging
+	compile("org.springframework.boot:spring-boot-starter-activemq")
+	compile("org.apache.activemq:activemq-broker")
+
 	testCompile('org.springframework.boot:spring-boot-starter-test')
 }

@@ -54,4 +54,8 @@ public class ConfigurationService {
     public List<Configuration> findByConfigNameIgnoreCase(String configName){
         return configurationRepository.findByConfigNameIgnoreCase(configName);
     }
+
+    public Configuration findByReferenceIdAndRefType(Long id, String type){
+        return configurationRepository.findByReferenceIdAndRefType(id, type);
+    }
 }

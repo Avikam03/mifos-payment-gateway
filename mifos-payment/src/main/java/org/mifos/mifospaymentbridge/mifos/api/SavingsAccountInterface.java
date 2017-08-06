@@ -9,6 +9,7 @@
 
 package org.mifos.mifospaymentbridge.mifos.api;
 
+import org.mifos.mifospaymentbridge.mifos.domain.savingsaccount.deposit.FixedDepositAccount;
 import org.mifos.mifospaymentbridge.mifos.domain.savingsaccount.deposit.SavingsAccountDepositRequest;
 import org.mifos.mifospaymentbridge.mifos.domain.savingsaccount.deposit.SavingsAccountDepositResponse;
 import org.mifos.mifospaymentbridge.mifos.domain.savingsaccount.transaction.SavingsAccountTransaction;
@@ -80,4 +81,18 @@ public interface SavingsAccountInterface {
                                                                @Path("transactionId") Long transactionId,
                                                                @Query("pretty") boolean isPretty,
                                                                @Query("tenantIdentifier") String tenantIdentifier);
+
+
+    /**
+     * API to fetch fixed deposit account by account identifier
+     *
+     * @param accountId Account Identifier
+     * @param isPretty Flag whether to format JSON
+     * @param tenantIdentifier Mifos Tenant Identifier
+     * @return
+     */
+    @GET("fixeddepositaccounts/{accountId}")
+    Call<FixedDepositAccount> getFixDepositAccount(@Path("accountId") Long accountId,
+                                                            @Query("pretty") boolean isPretty,
+                                                            @Query("tenantIdentifier") String tenantIdentifier);
 }

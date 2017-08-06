@@ -24,6 +24,21 @@ import retrofit2.http.Query;
 
 public interface LoanInterface {
 
+
+    /**
+     * API to fetch a loan account using a loan account identifier
+     *
+     * @param loanId loan Identifier
+     * @param isPretty Flag whether to format JSON
+     * @param tenantIdentifier Mifos Tenant Identifier
+     * @return
+     */
+    @GET("loans/{loanId}")
+    Call<LoanDisbursementResponse> disburse(@Path("loanId") Long loanId,
+                                            @Query("pretty") boolean isPretty,
+                                            @Query("tenantIdentifier") String tenantIdentifier);
+
+
     /**
      * API to disburse a loan to a client from mifos
      *

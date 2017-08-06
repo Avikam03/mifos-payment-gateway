@@ -16,4 +16,5 @@ public interface ConfigurationRepository extends CrudRepository<Configuration, L
 
     List<Configuration> findByConfigNameIgnoreCase(String configName);
 
+    Configuration findByReferenceIdAndRefType(Long refId, String refType);
 }
