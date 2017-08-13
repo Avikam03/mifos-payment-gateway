@@ -22,17 +22,20 @@ import org.mifos.mifospaymentbridge.mifos.domain.loan.repayment.LoanRepaymentReq
 import org.mifos.mifospaymentbridge.mifos.domain.loan.repayment.LoanRepaymentResponse;
 import org.mifos.mifospaymentbridge.mifos.domain.loan.undodisbursal.UndoLoanDisbursementRequest;
 import org.mifos.mifospaymentbridge.mifos.domain.loan.undodisbursal.UndoLoanDisbursementResponse;
-import org.mifos.mifospaymentbridge.mifos.domain.savingsaccount.deposit.SavingsAccountDepositRequest;
-import org.mifos.mifospaymentbridge.mifos.domain.savingsaccount.deposit.SavingsAccountDepositResponse;
+import org.mifos.mifospaymentbridge.mifos.domain.savingsaccount.deposit.AccountDepositRequest;
+import org.mifos.mifospaymentbridge.mifos.domain.savingsaccount.deposit.AccountDepositResponse;
+import org.mifos.mifospaymentbridge.mifos.domain.savingsaccount.deposit.RecurringDepositAccount;
 import org.mifos.mifospaymentbridge.mifos.domain.savingsaccount.transaction.SavingsAccountTransaction;
 import org.mifos.mifospaymentbridge.mifos.domain.savingsaccount.transaction.SavingsAccountTransactionUndoResponse;
 import org.mifos.mifospaymentbridge.mifos.domain.savingsaccount.withdrawal.SavingsAccountWithdrawRequest;
 import org.mifos.mifospaymentbridge.mifos.domain.savingsaccount.withdrawal.SavingsAccountWithdrawResponse;
+import org.mifos.mifospaymentbridge.model.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import retrofit2.Call;
+import retrofit2.Callback;
 import retrofit2.Response;
 import java.io.IOException;
 
@@ -74,71 +77,26 @@ public class MifosService {
     }
 
 
-    public Client getClientByID(Long clientId, String tenantIdentifier, boolean isPretty) throws IOException {
+    public void getClientByID(Long clientId, String tenantIdentifier, boolean isPretty, Callback<Client> callback) throws IOException {
         Client client = null;
         Call<Client> call = clientInterface.getClientById(clientId, tenantIdentifier, isPretty);
-        Response<Client> clientResponse = call.execute();
-        boolean isSuccessful = clientResponse.isSuccessful();
-        int code = clientResponse.code();
-        if (isSuccessful) {
-            client = clientResponse.body();
-            if (client != null) {
-                logger.info("- getClientByID({},{},{}) :Response [isSuccessful: {}, code: {}, client: {}]", clientId, tenantIdentifier, isPretty, isSuccessful, code, client);
-            }
-        } else {
-            ResponseBody errorResponse = clientResponse.errorBody();
-            if (errorResponse != null) {
-                logger.info("- getClientByID({},{},{}) :Response [isSuccessful: {}, code: {}, error: {}]", clientId, tenantIdentifier, isPretty, isSuccessful, code, errorResponse.string());
-            }
-        }
-        return client;
+        call.enqueue(callback);
     }
 
 
-    public Client getClientByID(Long clientId, String tenantIdentifier, boolean isPretty, String fields) throws IOException {
-        Client client = null;
-        Call<Client> call = clientInterface.getClientById(clientId, tenantIdentifier, false, fields);
-        Response<Client> response = call.execute();
-        boolean isSuccessful = response.isSuccessful();
-        int code = response.code();
-        if (isSuccessful) {
-            client = response.body();
-            if (client != null) {
-                logger.info("- getClientByID({},{},{},{}) :Response [isSuccessful: {}, code: {}, client: {}]", clientId, tenantIdentifier, isPretty, fields, isSuccessful, code, client);
-            }
-        } else {
-            ResponseBody errorResponse = response.errorBody();
-            if (errorResponse != null) {
-                logger.info("- getClientByID({},{},{}, {}) :Response [isSuccessful: {}, code: {}, error: {}]", clientId, tenantIdentifier, isPretty, fields, isSuccessful, code, errorResponse.string());
-            }
-        }
-        return client;
+    public void depositToSavingsAccount(String accountsNo, AccountDepositRequest depositRequest,
+                                                          boolean isPretty, String tenantIdentifier,
+                                                          Callback<AccountDepositResponse> callback) throws IOException {
+        AccountDepositResponse depositResponse = null;
+        Call<AccountDepositResponse> call = savingsAccountInterface.deposit(accountsNo, depositRequest, isPretty, tenantIdentifier);
+        call.enqueue(callback);
     }
 
-
-    public SavingsAccountDepositResponse depositToSavingsAccount(String accountsId, SavingsAccountDepositRequest depositRequest, boolean isPretty, String tenantIdentifier) throws IOException {
-        SavingsAccountDepositResponse depositResponse = null;
-        Call<SavingsAccountDepositResponse> call = savingsAccountInterface.deposit(accountsId, depositRequest, isPretty, tenantIdentifier);
-        Response<SavingsAccountDepositResponse> response = call.execute();
-        boolean isSuccessful = response.isSuccessful();
-        int code = response.code();
-        if (isSuccessful) {
-            depositResponse = response.body();
-            if (depositResponse != null) {
-                logger.info("- depositToSavingsAccount({}, {}, {}, {}) :Response [isSuccessful: {}, code: {}, depositResponse: {}]", accountsId, depositRequest, isPretty, tenantIdentifier, isSuccessful, code, depositResponse);
-            } else {
-                ResponseBody errorResponse = response.errorBody();
-                if (errorResponse != null) {
-                    logger.info("- depositToSavingsAccount({}, {}, {}, {}) :Response [isSuccessful: {}, code: {}, error: {}]", accountsId, depositRequest, isPretty, tenantIdentifier, isSuccessful, code, errorResponse.string());
-                }
-            }
-        } else {
-            ResponseBody errorResponse = response.errorBody();
-            if (errorResponse != null) {
-                logger.info("- depositToSavingsAccount({}, {}, {}, {}) :Response [isSuccessful: {}, code: {}, error: {}]", accountsId, depositRequest, isPretty, tenantIdentifier, isSuccessful, code, errorResponse.string());
-            }
-        }
-        return depositResponse;
+    public void recurringSaving(String accountsNo, AccountDepositRequest depositRequest,
+                                                  boolean isPretty, String tenantIdentifier, Callback<AccountDepositResponse> callback) throws IOException {
+        AccountDepositResponse depositResponse = null;
+        Call<AccountDepositResponse> call = savingsAccountInterface.recurringSaving(accountsNo, depositRequest, isPretty, tenantIdentifier);
+        call.enqueue(callback);
     }
 
 
@@ -252,34 +210,15 @@ public class MifosService {
     }
 
 
-    public LoanRepaymentResponse repay(Long loanId,
-                                                LoanRepaymentRequest loanRepaymentRequest,
-                                                boolean isPretty,
-                                                String tenantIdentifier) throws IOException{
+    public void repay(Long loanId,
+                      LoanRepaymentRequest loanRepaymentRequest,
+                      boolean isPretty,
+                      String tenantIdentifier,
+                      Callback<LoanRepaymentResponse> callback) throws IOException{
         LoanRepaymentResponse repaymentResponse = null;
         Call<LoanRepaymentResponse> call = loanInterface.repay(loanId, loanRepaymentRequest, isPretty, tenantIdentifier);
-        Response<LoanRepaymentResponse> response = call.execute();
+        call.enqueue(callback);
 
-        boolean isSuccessful = response.isSuccessful();
-        int code = response.code();
-        if (isSuccessful) {
-            repaymentResponse = response.body();
-            if (repaymentResponse != null) {
-                logger.info("- repay({}, {}, {}, {}) :Response [isSuccessful: {}, code: {}, accountTransaction: {}]", loanId, loanRepaymentRequest, isPretty, tenantIdentifier, isSuccessful, code, repaymentResponse);
-            } else {
-                ResponseBody errorResponse = response.errorBody();
-                if (errorResponse != null) {
-                    logger.info("- repay({}, {}, {}, {}) :Response [isSuccessful: {}, code: {}, error: {}]", loanId, loanRepaymentRequest, isPretty, tenantIdentifier, isSuccessful, code, errorResponse.string());
-                }
-            }
-        }else {
-            ResponseBody errorResponse = response.errorBody();
-            if (errorResponse != null) {
-                logger.info("- repay({}, {}, {}, {}) :Response [isSuccessful: {}, code: {}, error: {}]", loanId, loanRepaymentRequest, isPretty, tenantIdentifier, isSuccessful, code, errorResponse.string());
-            }
-        }
-
-        return repaymentResponse;
     }
 
 
@@ -313,14 +252,27 @@ public class MifosService {
         return undoDisbursalResponse;
     }
 
+    public void undoDisbursalAsync(Long loanId, UndoLoanDisbursementRequest undoLoanDisbursementRequest, boolean
+            isPretty, String tenantIdentifier, Callback<UndoLoanDisbursementResponse> callback) throws IOException{
+        Call<UndoLoanDisbursementResponse> call = loanInterface.undoDisbursal(loanId, undoLoanDisbursementRequest, true, "default");
+        call.enqueue(callback);
+    }
+
+    public void getLoanAccountAsync(String loanAccNo, boolean isPretty, String tenantIdentifier, Callback<Loan> callback) throws IOException{
+        Call<Loan> call = loanInterface.getLoanAccount(loanAccNo, isPretty, tenantIdentifier);
+        call.enqueue(callback);
+
+    }
+
+
     public Loan getLoanAccount(String loanAccNo, boolean isPretty, String tenantIdentifier) throws IOException{
         Loan loanAccount = null;
         Call<Loan> call = loanInterface.getLoanAccount(loanAccNo, isPretty, tenantIdentifier);
+
         Response<Loan> response = call.execute();
 
         boolean isSuccessful = response.isSuccessful();
         int code = response.code();
-
         if (isSuccessful) {
             loanAccount = response.body();
             if (loanAccount != null) {
@@ -328,17 +280,58 @@ public class MifosService {
             } else {
                 ResponseBody errorResponse = response.errorBody();
                 if (errorResponse != null) {
-                    logger.info("- getLoanAccount({}, {}, {}) :Response [isSuccessful: {}, code: {}, error: {}]", loanAccNo, isPretty, tenantIdentifier, isSuccessful, code, errorResponse.string());
+                    logger.info("- getLoanAccount({}, {}, {}, {}) :Response [isSuccessful: {}, code: {}, error: {}]", loanAccNo, isPretty, tenantIdentifier, isSuccessful, code, errorResponse.string());
                 }
             }
         }else {
             ResponseBody errorResponse = response.errorBody();
             if (errorResponse != null) {
-                logger.info("- getLoanAccount({}, {}, {}) :Response [isSuccessful: {}, code: {}, error: {}]", loanAccNo, isPretty, tenantIdentifier, isSuccessful, code, errorResponse.string());
+                logger.info("- getLoanAccount({}, {}, {}, {}) :Response [isSuccessful: {}, code: {}, error: {}]", loanAccNo, isPretty, tenantIdentifier, isSuccessful, code, errorResponse.string());
             }
         }
 
         return loanAccount;
+
+    }
+
+
+    public void getRecurringDepositAccountAsync(String depositAccNo, boolean isPretty,
+                                                              String tenantIdentifier,
+                                                              Callback<RecurringDepositAccount> callback) throws IOException{
+
+        Call<RecurringDepositAccount> call = savingsAccountInterface.getRecurringDepositAccount(depositAccNo, isPretty, tenantIdentifier);
+        call.enqueue(callback);
+    }
+
+
+    public RecurringDepositAccount getRecurringDepositAccount(String depositAccNo, boolean isPretty,
+                                                String tenantIdentifier) throws IOException{
+
+        RecurringDepositAccount depositAccount = null;
+        Call<RecurringDepositAccount> call = savingsAccountInterface.getRecurringDepositAccount(depositAccNo, isPretty, tenantIdentifier);
+
+        Response<RecurringDepositAccount> response = call.execute();
+
+        boolean isSuccessful = response.isSuccessful();
+        int code = response.code();
+        if (isSuccessful) {
+            depositAccount = response.body();
+            if (depositAccount != null) {
+                logger.info("- getRecurringDepositAccount({}, {}, {}) :Response [isSuccessful: {}, code: {}, accountTransaction: {}]", depositAccNo, isPretty, tenantIdentifier, isSuccessful, code, depositAccount);
+            } else {
+                ResponseBody errorResponse = response.errorBody();
+                if (errorResponse != null) {
+                    logger.info("- getRecurringDepositAccount({}, {}, {}, {}) :Response [isSuccessful: {}, code: {}, error: {}]", depositAccNo, isPretty, tenantIdentifier, isSuccessful, code, errorResponse.string());
+                }
+            }
+        }else {
+            ResponseBody errorResponse = response.errorBody();
+            if (errorResponse != null) {
+                logger.info("- getRecurringDepositAccount({}, {}, {}, {}) :Response [isSuccessful: {}, code: {}, error: {}]", depositAccNo, isPretty, tenantIdentifier, isSuccessful, code, errorResponse.string());
+            }
+        }
+
+        return depositAccount;
 
     }
 }

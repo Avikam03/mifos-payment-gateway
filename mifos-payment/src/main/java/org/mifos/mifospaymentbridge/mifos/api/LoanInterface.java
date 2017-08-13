@@ -40,6 +40,7 @@ public interface LoanInterface {
                         @Query("tenantIdentifier") String tenantIdentifier);
 
 
+
     /**
      * API to disburse a loan to a client from mifos
      *

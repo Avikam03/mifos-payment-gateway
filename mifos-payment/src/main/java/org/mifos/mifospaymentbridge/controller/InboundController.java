@@ -4,8 +4,10 @@ import org.mifos.mifospaymentbridge.Util.StatusCategory;
 import org.mifos.mifospaymentbridge.Util.TransactionStatus;
 import org.mifos.mifospaymentbridge.mifos.MifosService;
 import org.mifos.mifospaymentbridge.mifos.domain.loan.Loan;
+import org.mifos.mifospaymentbridge.mifos.domain.savingsaccount.deposit.RecurringDepositAccount;
 import org.mifos.mifospaymentbridge.model.InboundRequest;
 import org.mifos.mifospaymentbridge.model.Status;
+import org.mifos.mifospaymentbridge.services.InboundRequestService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.jms.DefaultJmsListenerContainerFactoryConfigurer;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -22,6 +24,10 @@ import org.springframework.jms.support.converter.MessageType;
 import org.springframework.messaging.converter.MappingJackson2MessageConverter;
 import org.springframework.messaging.converter.MessageConverter;
 import org.springframework.web.bind.annotation.*;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
 import javax.jms.Message;
 import javax.jms.ConnectionFactory;
 import javax.jms.JMSException;
@@ -38,6 +44,24 @@ public class InboundController {
     @Autowired
     private ConfigurableApplicationContext context;
 
+    @Autowired
+    private InboundRequestService inboundRequestService;
+
+    private Loan loanAccount = null;
+
+    @RequestMapping(value = "/savingsAccounts", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<RecurringDepositAccount> getRecurringDepositAccount(@RequestParam(value = "depositAccNo", required=true) String depositAccNo){
+        RecurringDepositAccount depositAccount = null;
+
+        try {
+            depositAccount = mifosService.getRecurringDepositAccount(depositAccNo, true, "default");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return new ResponseEntity<>(depositAccount, HttpStatus.OK);
+    }
+
 
     /**
      * Web service to get loan account for fineract.
@@ -45,11 +69,15 @@ public class InboundController {
      * @return
      */
     @RequestMapping(value = "/loans", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Loan> getLoanAccount(@RequestParam(value = "loanAccNo", required=true) String loanAccNo){
-        Loan loanAccount = null;
+    public ResponseEntity<Loan> getLoanAccount(@RequestBody String loanAccNo){
+
+        //Log loan account request
+        InboundRequest request = new InboundRequest();
+        request.setFineractAccNo(loanAccNo);
+        inboundRequestService.save(request);
 
         try {
-            loanAccount = mifosService.getLoanAccount(loanAccNo, true, "default");
+            mifosService.getLoanAccount(loanAccNo, true, "default");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -57,6 +85,13 @@ public class InboundController {
         return new ResponseEntity<>(loanAccount, HttpStatus.OK);
     }
 
+    /**
+     * Web service for receiving inbound request and
+     * queueing it and sending it to the inbound message
+     * receiver with jms.
+     * @param inboundRequest
+     * @return
+     */
     @RequestMapping(value = "/inbound/requests", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Status> acceptInboundRequest(@RequestBody InboundRequest inboundRequest){
         Status receptionStatus = null;

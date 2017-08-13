@@ -9,9 +9,9 @@
 
 package org.mifos.mifospaymentbridge.mifos.api;
 
-import org.mifos.mifospaymentbridge.mifos.domain.savingsaccount.deposit.FixedDepositAccount;
-import org.mifos.mifospaymentbridge.mifos.domain.savingsaccount.deposit.SavingsAccountDepositRequest;
-import org.mifos.mifospaymentbridge.mifos.domain.savingsaccount.deposit.SavingsAccountDepositResponse;
+import org.mifos.mifospaymentbridge.mifos.domain.savingsaccount.deposit.AccountDepositRequest;
+import org.mifos.mifospaymentbridge.mifos.domain.savingsaccount.deposit.AccountDepositResponse;
+import org.mifos.mifospaymentbridge.mifos.domain.savingsaccount.deposit.RecurringDepositAccount;
 import org.mifos.mifospaymentbridge.mifos.domain.savingsaccount.transaction.SavingsAccountTransaction;
 import org.mifos.mifospaymentbridge.mifos.domain.savingsaccount.transaction.SavingsAccountTransactionUndoResponse;
 import org.mifos.mifospaymentbridge.mifos.domain.savingsaccount.withdrawal.SavingsAccountWithdrawRequest;
@@ -23,19 +23,19 @@ import retrofit2.http.*;
 public interface SavingsAccountInterface {
 
     /**
-     * Deposit API for Mifos
+     * Deposit API for Mifos for voluntary savings
      *
      * @param accountsId Account Identifier
-     * @param depositRequest SavingsAccountDepositRequest object
+     * @param depositRequest AccountDepositRequest object
      * @param isPretty Flag whether to format JSON
      * @param tenantIdentifier Mifos Tenant Identifier
      * @return
      */
     @POST("savingsaccounts/{accountsId}/transactions?command=deposit")
-    Call<SavingsAccountDepositResponse> deposit(@Path("accountsId") String accountsId,
-                                                @Body SavingsAccountDepositRequest depositRequest,
-                                                @Query("pretty") boolean isPretty,
-                                                @Query("tenantIdentifier") String tenantIdentifier);
+    Call<AccountDepositResponse> deposit(@Path("accountsId") String accountsId,
+                                         @Body AccountDepositRequest depositRequest,
+                                         @Query("pretty") boolean isPretty,
+                                         @Query("tenantIdentifier") String tenantIdentifier);
 
     /**
      * Withdraw API for Mifos
@@ -86,13 +86,28 @@ public interface SavingsAccountInterface {
     /**
      * API to fetch fixed deposit account by account identifier
      *
-     * @param accountId Account Identifier
+     * @param accountNo Account Identifier
      * @param isPretty Flag whether to format JSON
      * @param tenantIdentifier Mifos Tenant Identifier
      * @return
      */
-    @GET("fixeddepositaccounts/{accountId}")
-    Call<FixedDepositAccount> getFixDepositAccount(@Path("accountId") Long accountId,
-                                                            @Query("pretty") boolean isPretty,
-                                                            @Query("tenantIdentifier") String tenantIdentifier);
+    @GET("recurringdepositaccounts")
+    Call<RecurringDepositAccount> getRecurringDepositAccount(@Query("accountNo") String accountNo,
+                                                                    @Query("pretty") boolean isPretty,
+                                                                    @Query("tenantIdentifier") String tenantIdentifier);
+
+    /**
+     * Deposit API for Mifos for recurring deposits.
+     *
+     * @param accountsId Account Identifier
+     * @param depositRequest AccountDepositRequest object
+     * @param isPretty Flag whether to format JSON
+     * @param tenantIdentifier Mifos Tenant Identifier
+     * @return
+     */
+    @POST("recurringdepositaccounts/1/transactions?command=deposit")
+    Call<AccountDepositResponse> recurringSaving(@Path("accountsId") String accountsId,
+                                         @Body AccountDepositRequest depositRequest,
+                                         @Query("pretty") boolean isPretty,
+                                         @Query("tenantIdentifier") String tenantIdentifier);
 }

@@ -27,7 +27,7 @@ public class InboundRequest implements Serializable{
 
     //Creation of TransactionType type
     public enum TransactionType{
-        SAVINGS, LOAN_REPAYMENT
+        VOLUNTARY_SAVINGS, LOAN_REPAYMENT, FIXED_DEPOSIT
     }
 
     /**
