@@ -6,19 +6,21 @@ import org.mifos.mifospaymentbridge.Util.TransactionStatus;
 import org.mifos.mifospaymentbridge.integration.ProviderApiService.PaymentService;
 import org.mifos.mifospaymentbridge.mifos.MifosService;
 import org.mifos.mifospaymentbridge.mifos.domain.loan.Loan;
+import org.mifos.mifospaymentbridge.mifos.domain.loan.LoanAccountSearchResult;
 import org.mifos.mifospaymentbridge.mifos.domain.loan.undodisbursal.UndoLoanDisbursementRequest;
 import org.mifos.mifospaymentbridge.mifos.domain.loan.undodisbursal.UndoLoanDisbursementResponse;
 import org.mifos.mifospaymentbridge.model.*;
 import org.mifos.mifospaymentbridge.services.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.Message;
+import org.springframework.stereotype.Component;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
 import java.io.IOException;
 
-
+@Component
 public class OutboundMessageReceiver{
 
     private OutboundRequest outboundRequest;
@@ -52,12 +54,12 @@ public class OutboundMessageReceiver{
     @Autowired
     private MifosService mifosService;
 
-    public void receiveRequest(Message<OutboundRequest> msg){
+    public void receiveRequest(OutboundRequest msg){
         handleTransaction(msg);
     }
 
-    public void handleTransaction(Message<OutboundRequest> request){
-        outboundRequest = request.getPayload();
+    public void handleTransaction(OutboundRequest request){
+        outboundRequest = request;
 
 
         //send the request to a particular mmp
@@ -80,16 +82,6 @@ public class OutboundMessageReceiver{
 
                 outboundTransactionStatus = paymentService.sendPayment(paymentApiUrl, outboundRequest);
 
-
-                if(outboundTransactionStatus.getCode().equals(String.valueOf(TransactionStatus.MMP_TRANSACTION_SUCCESS_CODE))){
-                    //Set reverse status of outboundRequest to NO Action
-                    reverseStatus.setCode(String.valueOf(TransactionStatus.NO_ACTION_CODE));
-                    reverseStatus.setDescription(TransactionStatus.NO_ACTION);
-                    reverseStatus.setStatusCategory(StatusCategory.GATEWAY_CATEGORY);
-                }else{
-                    attemptReverseDisbursal();
-                }
-
             }else{
                 //Set status of transaction with failed mmp lookup
                 outboundTransactionStatus.setCode(String.valueOf(TransactionStatus.MMP_LOOKUP_FAILED_CODE));
@@ -99,11 +91,9 @@ public class OutboundMessageReceiver{
 
             //Save the transaction status and reverse transaction status
             statusService.save(outboundTransactionStatus);
-            statusService.save(reverseStatus);
 
             //Save request in database
             outboundRequest.setOutboundStatusId(outboundTransactionStatus.getId());
-            outboundRequest.setReverseStatusId(reverseStatus.getId());
             outboundRequest = outboundRequestService.save(outboundRequest);
 
             //Log the transaction to DB
@@ -117,14 +107,14 @@ public class OutboundMessageReceiver{
     }
 
 
-    private void attemptReverseDisbursal(){
+    public void attemptReverseDisbursal(){
         //attempt to reverse transaction
         try {
-            mifosService.getLoanAccountAsync(outboundRequest.getFineractAccNo(), true, "default", new Callback<Loan>() {
+            mifosService.getLoanAccountAsync(outboundRequest.getFineractAccNo(), true, "default", new Callback<LoanAccountSearchResult>() {
                 @Override
-                public void onResponse(Call<Loan> call, Response<Loan> response) {
+                public void onResponse(Call<LoanAccountSearchResult> call, Response<LoanAccountSearchResult> response) {
                     if(response.isSuccessful()){
-                        loanAccount = response.body();
+                        loanAccount = response.body().pageItems.get(0);
                         UndoLoanDisbursementRequest undoDisbursementRequest = new UndoLoanDisbursementRequest();
                         undoDisbursementRequest.setNote(outboundTransactionStatus.getDescription());
                         try {
@@ -158,7 +148,7 @@ public class OutboundMessageReceiver{
                 }
 
                 @Override
-                public void onFailure(Call<Loan> call, Throwable t) {
+                public void onFailure(Call<LoanAccountSearchResult> call, Throwable t) {
                     System.out.println(t.getMessage());
                 }
             });

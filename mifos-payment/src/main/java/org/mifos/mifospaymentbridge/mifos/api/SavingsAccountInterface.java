@@ -9,15 +9,15 @@
 
 package org.mifos.mifospaymentbridge.mifos.api;
 
-import org.mifos.mifospaymentbridge.mifos.domain.savingsaccount.deposit.AccountDepositRequest;
-import org.mifos.mifospaymentbridge.mifos.domain.savingsaccount.deposit.AccountDepositResponse;
-import org.mifos.mifospaymentbridge.mifos.domain.savingsaccount.deposit.RecurringDepositAccount;
+import org.mifos.mifospaymentbridge.mifos.domain.savingsaccount.deposit.*;
 import org.mifos.mifospaymentbridge.mifos.domain.savingsaccount.transaction.SavingsAccountTransaction;
 import org.mifos.mifospaymentbridge.mifos.domain.savingsaccount.transaction.SavingsAccountTransactionUndoResponse;
 import org.mifos.mifospaymentbridge.mifos.domain.savingsaccount.withdrawal.SavingsAccountWithdrawRequest;
 import org.mifos.mifospaymentbridge.mifos.domain.savingsaccount.withdrawal.SavingsAccountWithdrawResponse;
 import retrofit2.Call;
 import retrofit2.http.*;
+
+import java.util.List;
 
 
 public interface SavingsAccountInterface {
@@ -32,7 +32,7 @@ public interface SavingsAccountInterface {
      * @return
      */
     @POST("savingsaccounts/{accountsId}/transactions?command=deposit")
-    Call<AccountDepositResponse> deposit(@Path("accountsId") String accountsId,
+    Call<AccountDepositResponse> deposit(@Path("accountsId") Integer accountsId,
                                          @Body AccountDepositRequest depositRequest,
                                          @Query("pretty") boolean isPretty,
                                          @Query("tenantIdentifier") String tenantIdentifier);
@@ -51,6 +51,11 @@ public interface SavingsAccountInterface {
                                                   @Body SavingsAccountWithdrawRequest withdrawRequest,
                                                   @Query("pretty") boolean isPretty,
                                                   @Query("tenantIdentifier") String tenantIdentifier);
+
+    @GET("savingsaccounts")
+    Call<SavingsAccountSearchResult> getSavingsAccount(@Query("accountNo") String accountNo,
+                                                       @Query("pretty") boolean isPretty,
+                                                       @Query("tenantIdentifier") String tenantIdentifier);
 
     /**
      * API to fetch savings account transaction by transaction Identifier
@@ -92,9 +97,9 @@ public interface SavingsAccountInterface {
      * @return
      */
     @GET("recurringdepositaccounts")
-    Call<RecurringDepositAccount> getRecurringDepositAccount(@Query("accountNo") String accountNo,
-                                                                    @Query("pretty") boolean isPretty,
-                                                                    @Query("tenantIdentifier") String tenantIdentifier);
+    Call<List<RecurringDepositAccount>> getRecurringDepositAccount(@Query("accountNo") String accountNo,
+                                                                   @Query("pretty") boolean isPretty,
+                                                                   @Query("tenantIdentifier") String tenantIdentifier);
 
     /**
      * Deposit API for Mifos for recurring deposits.
@@ -105,8 +110,8 @@ public interface SavingsAccountInterface {
      * @param tenantIdentifier Mifos Tenant Identifier
      * @return
      */
-    @POST("recurringdepositaccounts/1/transactions?command=deposit")
-    Call<AccountDepositResponse> recurringSaving(@Path("accountsId") String accountsId,
+    @POST("recurringdepositaccounts/{accountsId}/transactions?command=deposit")
+    Call<AccountDepositResponse> recurringSaving(@Path("accountsId") Integer accountsId,
                                          @Body AccountDepositRequest depositRequest,
                                          @Query("pretty") boolean isPretty,
                                          @Query("tenantIdentifier") String tenantIdentifier);

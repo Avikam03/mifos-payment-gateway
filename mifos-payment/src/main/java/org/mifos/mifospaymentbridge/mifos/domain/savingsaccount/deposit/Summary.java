@@ -14,6 +14,6 @@ public class Summary {
     @JsonProperty("currency")
     public Currency_ currency;
     @JsonProperty("accountBalance")
-    public Integer accountBalance;
+    public Double accountBalance;
 
 }

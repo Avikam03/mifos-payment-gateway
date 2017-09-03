@@ -5,11 +5,10 @@ import org.mifos.mifospaymentbridge.Util.TransactionStatus;
 import org.mifos.mifospaymentbridge.integration.ProviderApiService.PaymentService;
 import org.mifos.mifospaymentbridge.mifos.MifosService;
 import org.mifos.mifospaymentbridge.mifos.domain.loan.Loan;
+import org.mifos.mifospaymentbridge.mifos.domain.loan.LoanAccountSearchResult;
 import org.mifos.mifospaymentbridge.mifos.domain.loan.repayment.LoanRepaymentRequest;
 import org.mifos.mifospaymentbridge.mifos.domain.loan.repayment.LoanRepaymentResponse;
-import org.mifos.mifospaymentbridge.mifos.domain.savingsaccount.deposit.AccountDepositRequest;
-import org.mifos.mifospaymentbridge.mifos.domain.savingsaccount.deposit.AccountDepositResponse;
-import org.mifos.mifospaymentbridge.mifos.domain.savingsaccount.deposit.RecurringDepositAccount;
+import org.mifos.mifospaymentbridge.mifos.domain.savingsaccount.deposit.*;
 import org.mifos.mifospaymentbridge.model.InboundCallbackLog;
 import org.mifos.mifospaymentbridge.model.InboundRequest;
 import org.mifos.mifospaymentbridge.model.MobileMoneyProvider;
@@ -17,6 +16,7 @@ import org.mifos.mifospaymentbridge.model.Status;
 import org.mifos.mifospaymentbridge.services.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jms.annotation.JmsListener;
+import org.springframework.stereotype.Component;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -25,13 +25,18 @@ import javax.persistence.criteria.CriteriaBuilder;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Locale;
 
-/**
- * Created by vladimirfomene on 8/4/17.
- */
+@Component
 public class InboundMessageReceiver {
 
     private Loan loanAccount;
+
+    private SavingsAccount savingsAccount;
+
+    private String callbackUrl;
 
     private RecurringDepositAccount depositAccount;
 
@@ -47,7 +52,7 @@ public class InboundMessageReceiver {
 
     private AccountDepositResponse depositResponse;
 
-    private InboundRequest inboundRequest;
+    private InboundRequest inboundRequest = new InboundRequest();
 
 
     @Autowired
@@ -60,9 +65,6 @@ public class InboundMessageReceiver {
     private StatusService statusService;
 
     @Autowired
-    private MobileMoneyProviderService mmpService;
-
-    @Autowired
     private ConfigurationService configurationService;
 
     @Autowired
@@ -72,64 +74,89 @@ public class InboundMessageReceiver {
     private PaymentService paymentService;
 
 
-    public InboundMessageReceiver(){
-
-    }
 
     @JmsListener(destination = "inboundAcceptor", containerFactory = "inboundFactory")
     public void receiveRequest(InboundRequest msg){
+        //System.out.println(msg.toString());
         handleTransaction(msg);
     }
 
     public void handleTransaction(InboundRequest request){
 
         //Query that particular request
-        inboundRequest = inboundRequestService.findInboundRequestByFineractAccNo(request.getFineractAccNo());
+        //inboundRequest = inboundRequestService.findInboundRequestByFineractAccNo(request.getFineractAccNo());
 
         //Create inbound request object
         buildRequest(request);
+
         //handle request per payment method
         if(inboundRequest.getPaymentMethod().equalsIgnoreCase("mobile money")){
-
-            //mmp lookup
-            MobileMoneyProvider mmp = mmpService.findOne(inboundRequest.getMmpId());
-
-            //Log the request to the database
-            inboundRequest = inboundRequestService.save(inboundRequest);
 
             //send request to fineract
             if (inboundRequest.getTransactType() == InboundRequest.TransactionType.LOAN_REPAYMENT) {
                 initiateLoanRepayment(inboundRequest);
+                System.out.println("Loan Repayment");
             }
 
 
             if (inboundRequest.getTransactType() == InboundRequest.TransactionType.VOLUNTARY_SAVINGS) {
                 initiateVoluntarySaving(inboundRequest);
+                System.out.println("Voluntary Savings");
             }
 
-            if(inboundRequest.getTransactType() == InboundRequest.TransactionType.FIXED_DEPOSIT){
+            if(inboundRequest.getTransactType() == InboundRequest.TransactionType.RECURRING_DEPOSIT){
                 initiateReccuringDeposit(inboundRequest);
+                System.out.println("Fixed Deposit");
             }
 
-            String callbackUrl = configurationService.findConfigurationByConfigNameAndReferenceId("callback_url",
+            //System.out.println(inboundRequest.getMmpId());
+            callbackUrl = configurationService.findConfigurationByConfigNameAndReferenceId("callback_url",
                     inboundRequest.getMmpId()).getConfigValue();
 
-            //Create callback log and save it.
-            callbackLog = new InboundCallbackLog();
-            callbackLog.setInboundRequestId(inboundRequest.getId());
-            callbackLog.setCallbackUrl(callbackUrl);
-            callbackLog.setCallbackMessage(callbackStatus.getDescription());
-            callbackLog.setCallbackDtm(Timestamp.valueOf(LocalDateTime.now()));
-            inboundCallbackLogService.save(callbackLog);
 
-            //Log callback status and send it
-            statusService.save(callbackStatus);
-            callbackStatus = paymentService.sendInboundTransactionStatus(callbackUrl, callbackStatus);
+
+            //String callback = paymentService.sendInboundTransactionStatus(callbackUrl, inboundStatus);
+            //System.out.println(callbackStatus.toString());
+            //callbackStatus = paymentService.sendInboundTransactionStatus(callbackUrl, callbackStatus);
+
+
+
 
         }else if(inboundRequest.getPaymentMethod().equalsIgnoreCase("bit coin")){
 
         }
         
+    }
+
+    private SavingsAccount getSavingsAccountByAccountNo(List<SavingsAccount> savingsAccountList, String accountNo){
+        SavingsAccount account = null;
+        for(SavingsAccount savingsAccount: savingsAccountList){
+            if(savingsAccount.getAccountNo().equals(accountNo)){
+                account = savingsAccount;
+                break;
+            }
+        }
+        return account;
+    }
+
+    private void createAndSaveInboudCallbackLog(Status callbackStatus){
+
+        //Create inbound callback log
+        callbackLog = new InboundCallbackLog();
+        callbackLog.setInboundRequestId(inboundRequest.getId());
+        callbackLog.setCallbackUrl(callbackUrl);
+        callbackLog.setCallbackStatusId(callbackStatus.getId());
+        callbackLog.setCallbackMessage(callbackStatus.getDescription());
+        callbackLog.setCallbackDtm(Timestamp.valueOf(LocalDateTime.now()));
+
+        //Log the request to the database
+        inboundCallbackLogService.save(callbackLog);
+
+    }
+
+    private void savingInboundRequest(Status inboundStatus){
+        inboundRequest.setInboundStatusId(inboundStatus.getId());
+        inboundRequest = inboundRequestService.save(inboundRequest);
     }
 
     private void buildRequest(InboundRequest request){
@@ -161,20 +188,26 @@ public class InboundMessageReceiver {
         repaymentRequest.setTransactionAmount(String.valueOf(request.getAmount()));
         repaymentRequest.setDateFormat("dd MMMM yyyy");
         repaymentRequest.setNote(request.getTransactionReason());
-        repaymentRequest.setTransactionDate(request.getRequestedDtm().toString());
+        repaymentRequest.setLocale("en");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMMM yyyy");
+        repaymentRequest.setTransactionDate(LocalDateTime.now().toLocalDate().format(formatter));
 
         //Get the loan account and repay it
         getLoanAccountAndRepayIt(request);
 
     }
 
-    private void initiateVoluntarySaving(InboundRequest request){
+    private void initiateVoluntarySaving(InboundRequest inboundRequest){
         AccountDepositRequest depositRequest = new AccountDepositRequest();
-        depositRequest.setTransactionAmount(String.valueOf(request.getAmount()));
-        depositRequest.setAccountNumber(request.getFineractAccNo());
-        depositRequest.setTransactionDate(request.getInboundStatusDtm().toString());
+        depositRequest.setTransactionAmount(String.valueOf(inboundRequest.getAmount()));
+        depositRequest.setAccountNumber(inboundRequest.getFineractAccNo());
+        depositRequest.setDateFormat("dd MMMM yyyy");
+        depositRequest.setLocale("en");
+        depositRequest.setPaymentTypeId("11");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMMM yyyy"); //Locale.getDefault()
+        depositRequest.setTransactionDate(LocalDateTime.now().toLocalDate().format(formatter));
 
-        sendVoluntarySavingRequest(depositRequest, request);
+        getSavingsAccountAndMakeVoluntarySaving(depositRequest, inboundRequest);
     }
 
     private void initiateReccuringDeposit(InboundRequest request){
@@ -183,7 +216,12 @@ public class InboundMessageReceiver {
         AccountDepositRequest depositRequest = new AccountDepositRequest();
         depositRequest.setTransactionAmount(String.valueOf(request.getAmount()));
         depositRequest.setAccountNumber(request.getFineractAccNo());
-        depositRequest.setTransactionDate(request.getInboundStatusDtm().toString());
+        depositRequest.setDateFormat("dd MMMM yyyy");
+        depositRequest.setLocale("en");
+        depositRequest.setPaymentTypeId("11");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMMM yyyy");
+        depositRequest.setTransactionDate(LocalDateTime.now().toLocalDate().format(formatter));
+
 
         //Get the recurring deposit account from fineract and make a deposit
         getRecurringDepositAccountAndMakeDeposit(request, depositRequest);
@@ -191,21 +229,58 @@ public class InboundMessageReceiver {
 
     }
 
-    private void getLoanAccountAndRepayIt(InboundRequest request){
+    private void getSavingsAccountAndMakeVoluntarySaving(AccountDepositRequest depositRequest, InboundRequest inboundRequest){
         try {
-            mifosService.getLoanAccountAsync(request.getFineractAccNo(), true, "default", new Callback<Loan>() {
+            mifosService.getSavingsAccountAsync(inboundRequest.getFineractAccNo(), true, "default", new Callback<SavingsAccountSearchResult>() {
                 @Override
-                public void onResponse(Call<Loan> call, Response<Loan> response) {
+                public void onResponse(Call<SavingsAccountSearchResult> call, Response<SavingsAccountSearchResult> response) {
                     if(response.isSuccessful()){
-                        loanAccount = response.body();
-                        callFineractForRepayment();
+                        if(!response.body().pageItems.isEmpty()){
+                            savingsAccount = getSavingsAccountByAccountNo(response.body().pageItems, inboundRequest.getFineractAccNo());
+                            //System.out.println(savingsAccount.toString());
+                        }
+                        //System.out.println(loanAccount.toString());
+
+                        if(savingsAccount != null){
+                            callFineractForVoluntarySaving(depositRequest, inboundRequest);
+                        }
+
                     }else{
                         System.out.println(response.errorBody());
                     }
                 }
 
                 @Override
-                public void onFailure(Call<Loan> call, Throwable t) {
+                public void onFailure(Call<SavingsAccountSearchResult> call, Throwable t) {
+                    System.out.println(t.getMessage());
+                }
+            });
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void getLoanAccountAndRepayIt(InboundRequest request){
+        try {
+            //System.out.println(mifosService.toString());
+            mifosService.getLoanAccountAsync(request.getFineractAccNo(), true, "default", new Callback<LoanAccountSearchResult>() {
+                @Override
+                public void onResponse(Call<LoanAccountSearchResult> call, Response<LoanAccountSearchResult> response) {
+                    if(response.isSuccessful()){
+                        if(!response.body().pageItems.isEmpty()) loanAccount = response.body().pageItems.get(0);
+                        //System.out.println(loanAccount.toString());
+
+                        if(loanAccount != null){
+                            callFineractForRepayment();
+                        }
+
+                    }else{
+                        System.out.println(response.errorBody());
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<LoanAccountSearchResult> call, Throwable t) {
                     System.out.println(t.getMessage());
                 }
             });
@@ -217,7 +292,7 @@ public class InboundMessageReceiver {
     private void callFineractForRepayment(){
 
         try {
-            mifosService.repay(loanAccount.getId(), repaymentRequest, true, "default", new Callback<LoanRepaymentResponse>() {
+            mifosService.repayLoanAsync(loanAccount.getId(), repaymentRequest, true, "default", new Callback<LoanRepaymentResponse>() {
                 @Override
                 public void onResponse(Call<LoanRepaymentResponse> call, Response<LoanRepaymentResponse> response) {
                     if(response.isSuccessful()){
@@ -236,6 +311,15 @@ public class InboundMessageReceiver {
                         inboundStatus.setDescription(TransactionStatus.REPAYMENT_FAILURE);
                         inboundStatus.setStatusCategory(StatusCategory.FINERACT_CATEGORY);
                     }
+
+                    statusService.save(inboundStatus);
+                    callbackStatus = paymentService.sendInboundTransactionStatus(callbackUrl, inboundStatus);
+                    //Log callback status
+                    statusService.save(callbackStatus);
+
+                    createAndSaveInboudCallbackLog(callbackStatus);
+                    savingInboundRequest(inboundStatus);
+
                 }
 
                 @Override
@@ -245,7 +329,19 @@ public class InboundMessageReceiver {
                     inboundStatus.setDescription(TransactionStatus.REPAYMENT_FAILURE);
                     inboundStatus.setStatusCategory(StatusCategory.FINERACT_CATEGORY);
                     System.out.println(t.getMessage());
+                    statusService.save(inboundStatus);
+                    callbackStatus = paymentService.sendInboundTransactionStatus(callbackUrl, inboundStatus);
+                    //Log callback status
+                    statusService.save(callbackStatus);
+                    //System.out.println(inboundStatus.toString());
+
+                    createAndSaveInboudCallbackLog(callbackStatus);
+                    savingInboundRequest(inboundStatus);
                 }
+
+
+
+
             });
 
         } catch (IOException e) {
@@ -254,26 +350,35 @@ public class InboundMessageReceiver {
 
     }
 
-    private void sendVoluntarySavingRequest(AccountDepositRequest depositRequest, InboundRequest request){
+    private void callFineractForVoluntarySaving(AccountDepositRequest depositRequest, InboundRequest request){
         try {
-            mifosService.depositToSavingsAccount(request.getFineractAccNo(), depositRequest,
+            mifosService.depositToSavingsAccountAsync(savingsAccount.getId(), depositRequest,
                     true, "default", new Callback<AccountDepositResponse>() {
                         @Override
                         public void onResponse(Call<AccountDepositResponse> call, Response<AccountDepositResponse> response) {
                             if(response.isSuccessful()){
                                 depositResponse = response.body();
                                 if(depositResponse != null){
-                                    //Send response back to mmp
+
                                     inboundStatus.setCode(String.valueOf(TransactionStatus.VOLUNTARY_DEPOSIT_SUCCESS_CODE));
                                     inboundStatus.setDescription(TransactionStatus.VOLUNTARY_DEPOSIT_SUCCESS);
                                     inboundStatus.setStatusCategory(StatusCategory.FINERACT_CATEGORY);
                                 }
                             }else{
-                                System.out.println(response.errorBody());
+                                System.out.println(response.errorBody().toString());
                                 inboundStatus.setCode(String.valueOf(TransactionStatus.VOLUNTARY_DEPOSIT_FAILURE_CODE));
                                 inboundStatus.setDescription(TransactionStatus.VOLUNTARY_DEPOSIT_FAILURE);
                                 inboundStatus.setStatusCategory(StatusCategory.FINERACT_CATEGORY);
                             }
+
+                            statusService.save(inboundStatus);
+                            callbackStatus = paymentService.sendInboundTransactionStatus(callbackUrl, inboundStatus);
+                            //Log callback status
+                            statusService.save(callbackStatus);
+                            //System.out.println(inboundStatus.toString());
+
+                            createAndSaveInboudCallbackLog(callbackStatus);
+                            savingInboundRequest(inboundStatus);
                         }
 
                         @Override
@@ -282,6 +387,15 @@ public class InboundMessageReceiver {
                             inboundStatus.setCode(String.valueOf(TransactionStatus.VOLUNTARY_DEPOSIT_FAILURE_CODE));
                             inboundStatus.setDescription(TransactionStatus.VOLUNTARY_DEPOSIT_FAILURE);
                             inboundStatus.setStatusCategory(StatusCategory.FINERACT_CATEGORY);
+
+                            statusService.save(inboundStatus);
+                            callbackStatus = paymentService.sendInboundTransactionStatus(callbackUrl, inboundStatus);
+                            //Log callback status
+                            statusService.save(callbackStatus);
+                            //System.out.println(inboundStatus.toString());
+
+                            createAndSaveInboudCallbackLog(callbackStatus);
+                            savingInboundRequest(inboundStatus);
                         }
                     });
         } catch (IOException e) {
@@ -294,13 +408,17 @@ public class InboundMessageReceiver {
     private void getRecurringDepositAccountAndMakeDeposit(InboundRequest request, AccountDepositRequest depositRequest){
         try {
             mifosService.getRecurringDepositAccountAsync(request.getFineractAccNo(),
-                    true, "default", new Callback<RecurringDepositAccount>() {
+                    true, "default", new Callback<List<RecurringDepositAccount>>() {
                         @Override
-                        public void onResponse(Call<RecurringDepositAccount> call, Response<RecurringDepositAccount> response) {
+                        public void onResponse(Call<List<RecurringDepositAccount>> call, Response<List<RecurringDepositAccount>> response) {
                             if(response.isSuccessful()){
-                                depositAccount = response.body();
+                                depositAccount = getDepositAccountByAccountNo(response.body(), request.getFineractAccNo());
+                                System.out.println(depositAccount.toString());
+                                if(depositAccount != null){
+                                    callFineractForRecurringDeposit(request, depositRequest);
+                                }
 
-                                callFineractForRecurringDeposit(request, depositRequest);
+
                             }else{
                                 System.out.println(response.errorBody());
                             }
@@ -308,7 +426,7 @@ public class InboundMessageReceiver {
                         }
 
                         @Override
-                        public void onFailure(Call<RecurringDepositAccount> call, Throwable t) {
+                        public void onFailure(Call<List<RecurringDepositAccount>> call, Throwable t) {
                             System.out.println(t.getMessage());
                         }
                     });
@@ -318,16 +436,27 @@ public class InboundMessageReceiver {
         }
     }
 
+    private RecurringDepositAccount getDepositAccountByAccountNo(List<RecurringDepositAccount> depositAccounts, String accountNo){
+        RecurringDepositAccount account = null;
+        for(RecurringDepositAccount depositAccount: depositAccounts){
+            if(depositAccount.getAccountNo().equals(accountNo)){
+                account = depositAccount;
+                break;
+            }
+        }
+        return account;
+    }
+
     private void callFineractForRecurringDeposit(InboundRequest request, AccountDepositRequest depositRequest){
         try {
-            mifosService.recurringSaving(request.getFineractAccNo(), depositRequest,
+            mifosService.recurringSavingAsync(depositAccount.getId(), depositRequest,
                     true, "default", new Callback<AccountDepositResponse>() {
                         @Override
                         public void onResponse(Call<AccountDepositResponse> call, Response<AccountDepositResponse> response) {
                             if(response.isSuccessful()){
                                 depositResponse = response.body();
 
-                                //Save status for the transaction
+                                //Set status for the transaction
                                 inboundStatus.setCode(String.valueOf(TransactionStatus.RECURRING_DEPOSIT_SUCCESS_CODE));
                                 inboundStatus.setDescription(TransactionStatus.RECURRING_DEPOSIT_SUCCESS);
                                 inboundStatus.setStatusCategory(StatusCategory.FINERACT_CATEGORY);
@@ -340,6 +469,15 @@ public class InboundMessageReceiver {
                                 System.out.println(response.errorBody());
                             }
 
+                            statusService.save(inboundStatus);
+                            callbackStatus = paymentService.sendInboundTransactionStatus(callbackUrl, inboundStatus);
+                            //Log callback status
+                            statusService.save(callbackStatus);
+                            //System.out.println(inboundStatus.toString());
+
+                            createAndSaveInboudCallbackLog(callbackStatus);
+                            savingInboundRequest(inboundStatus);
+
                         }
 
                         @Override
@@ -349,6 +487,15 @@ public class InboundMessageReceiver {
                             inboundStatus.setDescription(TransactionStatus.RECURRING_DEPOSIT_FAILURE);
                             inboundStatus.setStatusCategory(StatusCategory.FINERACT_CATEGORY);
                             System.out.println(t.getMessage());
+
+                            statusService.save(inboundStatus);
+                            callbackStatus = paymentService.sendInboundTransactionStatus(callbackUrl, inboundStatus);
+                            //Log callback status
+                            statusService.save(callbackStatus);
+                            //System.out.println(inboundStatus.toString());
+
+                            createAndSaveInboudCallbackLog(callbackStatus);
+                            savingInboundRequest(inboundStatus);
                         }
                     });
 

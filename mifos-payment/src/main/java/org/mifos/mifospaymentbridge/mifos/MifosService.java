@@ -16,15 +16,14 @@ import org.mifos.mifospaymentbridge.mifos.api.LoanInterface;
 import org.mifos.mifospaymentbridge.mifos.api.SavingsAccountInterface;
 import org.mifos.mifospaymentbridge.mifos.domain.client.Client;
 import org.mifos.mifospaymentbridge.mifos.domain.loan.Loan;
+import org.mifos.mifospaymentbridge.mifos.domain.loan.LoanAccountSearchResult;
 import org.mifos.mifospaymentbridge.mifos.domain.loan.disbursement.LoanDisbursementRequest;
 import org.mifos.mifospaymentbridge.mifos.domain.loan.disbursement.LoanDisbursementResponse;
 import org.mifos.mifospaymentbridge.mifos.domain.loan.repayment.LoanRepaymentRequest;
 import org.mifos.mifospaymentbridge.mifos.domain.loan.repayment.LoanRepaymentResponse;
 import org.mifos.mifospaymentbridge.mifos.domain.loan.undodisbursal.UndoLoanDisbursementRequest;
 import org.mifos.mifospaymentbridge.mifos.domain.loan.undodisbursal.UndoLoanDisbursementResponse;
-import org.mifos.mifospaymentbridge.mifos.domain.savingsaccount.deposit.AccountDepositRequest;
-import org.mifos.mifospaymentbridge.mifos.domain.savingsaccount.deposit.AccountDepositResponse;
-import org.mifos.mifospaymentbridge.mifos.domain.savingsaccount.deposit.RecurringDepositAccount;
+import org.mifos.mifospaymentbridge.mifos.domain.savingsaccount.deposit.*;
 import org.mifos.mifospaymentbridge.mifos.domain.savingsaccount.transaction.SavingsAccountTransaction;
 import org.mifos.mifospaymentbridge.mifos.domain.savingsaccount.transaction.SavingsAccountTransactionUndoResponse;
 import org.mifos.mifospaymentbridge.mifos.domain.savingsaccount.withdrawal.SavingsAccountWithdrawRequest;
@@ -37,7 +36,10 @@ import org.springframework.stereotype.Service;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+import retrofit2.http.Query;
+
 import java.io.IOException;
+import java.util.List;
 
 @Service
 public class MifosService {
@@ -47,15 +49,28 @@ public class MifosService {
 
     private Logger logger = LoggerFactory.getLogger(this.getClass());
 
+    /**
+     * Create a client to communicate with Beyonic's api.
+     * @param mifosProperties configuration prop for fineract backend
+     */
     @Autowired
     public MifosService(MifosProperties mifosProperties) {
         String mifosApiUrl = mifosProperties.getBaseUrl() + mifosProperties.getApiVersion();
         logger.info("Creating mifos service with baseUrl: {}", mifosApiUrl);
         clientInterface = ApiClient.getClient(mifosApiUrl, mifosProperties.getUsername(), mifosProperties.getPassword()).create(ClientInterface.class);
+        loanInterface = ApiClient.getClient(mifosApiUrl, mifosProperties.getUsername(), mifosProperties.getPassword()).create(LoanInterface.class);
+        savingsAccountInterface = ApiClient.getClient(mifosApiUrl, mifosProperties.getUsername(), mifosProperties.getPassword()).create(SavingsAccountInterface.class);
     }
 
 
-
+    /**
+     * This method searches a client in fineract using their phone number.
+     * @param tenantIdentifier tenant identifier
+     * @param isPretty determine whether result is pretty or not
+     * @param phoneNumber client phone number
+     * @return
+     * @throws IOException
+     */
     public Client getClientByPhoneNumber(String tenantIdentifier, boolean isPretty, String phoneNumber) throws IOException{
         Client client = null;
         Call<Client> call = clientInterface.getClientByPhoneNumber(tenantIdentifier, isPretty, phoneNumber);
@@ -76,30 +91,79 @@ public class MifosService {
         return client;
     }
 
+    /**
+     * This methods uses a client phone number to get information about a client. It is
+     * asynchronous.
+     * @param tenantIdentifier
+     * @param isPretty
+     * @param phoneNumber
+     * @param callback
+     */
+    public void getClientByPhoneNumberAsync(String tenantIdentifier, boolean isPretty, String phoneNumber, Callback<Client> callback){
+        Call<Client> call = clientInterface.getClientByPhoneNumber(tenantIdentifier, isPretty, phoneNumber);
+        call.enqueue(callback);
+    }
 
-    public void getClientByID(Long clientId, String tenantIdentifier, boolean isPretty, Callback<Client> callback) throws IOException {
-        Client client = null;
+
+
+    /**
+     * Get client from the fineract backend using a clientID.
+     * This method is asynch, so it takes it a callback that is called once the
+     * request returns.
+     * @param clientId
+     * @param tenantIdentifier
+     * @param isPretty
+     * @param callback
+     * @throws IOException
+     */
+    public void getClientByIdAsync(Long clientId, String tenantIdentifier, boolean isPretty, Callback<Client> callback) throws IOException {
         Call<Client> call = clientInterface.getClientById(clientId, tenantIdentifier, isPretty);
         call.enqueue(callback);
     }
 
 
-    public void depositToSavingsAccount(String accountsNo, AccountDepositRequest depositRequest,
+    /**
+     * This asynchronous method makes a call to fineract to deposit money into
+     * a client's saving account.
+     * @param accountsId saving account no
+     * @param depositRequest request body of the account deposit request.
+     * @param isPretty
+     * @param tenantIdentifier
+     * @param callback
+     * @throws IOException
+     */
+    public void depositToSavingsAccountAsync(Integer accountsId, AccountDepositRequest depositRequest,
                                                           boolean isPretty, String tenantIdentifier,
                                                           Callback<AccountDepositResponse> callback) throws IOException {
-        AccountDepositResponse depositResponse = null;
-        Call<AccountDepositResponse> call = savingsAccountInterface.deposit(accountsNo, depositRequest, isPretty, tenantIdentifier);
+        Call<AccountDepositResponse> call = savingsAccountInterface.deposit(accountsId, depositRequest, isPretty, tenantIdentifier);
         call.enqueue(callback);
     }
 
-    public void recurringSaving(String accountsNo, AccountDepositRequest depositRequest,
+    /**
+     * This asynchronous method helps you to make deposit to a recurring deposit account.
+     * @param accountsId
+     * @param depositRequest
+     * @param isPretty
+     * @param tenantIdentifier
+     * @param callback
+     * @throws IOException
+     */
+    public void recurringSavingAsync(Integer accountsId, AccountDepositRequest depositRequest,
                                                   boolean isPretty, String tenantIdentifier, Callback<AccountDepositResponse> callback) throws IOException {
-        AccountDepositResponse depositResponse = null;
-        Call<AccountDepositResponse> call = savingsAccountInterface.recurringSaving(accountsNo, depositRequest, isPretty, tenantIdentifier);
+        Call<AccountDepositResponse> call = savingsAccountInterface.recurringSaving(accountsId, depositRequest, isPretty, tenantIdentifier);
         call.enqueue(callback);
     }
 
 
+    /**
+     * This method calls fineract to withdraw from a particular savings account.
+     * @param accountsId
+     * @param withdrawRequest
+     * @param isPretty
+     * @param tenantIdentifier
+     * @return
+     * @throws IOException
+     */
     public SavingsAccountWithdrawResponse withdrawFromSavingsAccount(Long accountsId, SavingsAccountWithdrawRequest withdrawRequest, boolean isPretty, String tenantIdentifier) throws IOException {
         SavingsAccountWithdrawResponse withdrawResponse = null;
         Call<SavingsAccountWithdrawResponse> call = savingsAccountInterface.withdraw(accountsId, withdrawRequest, isPretty, tenantIdentifier);
@@ -126,6 +190,22 @@ public class MifosService {
         return withdrawResponse;
     }
 
+    /**
+     * This asynchronous method withdraws fund from a particular savings account.
+     * @param accountsId
+     * @param withdrawRequest
+     * @param isPretty
+     * @param tenantIdentifier
+     * @param callback
+     * @throws IOException
+     */
+    public void withdrawFromSavingsAccountAsync(Long accountsId,
+                                                                     SavingsAccountWithdrawRequest withdrawRequest,
+                                                                     boolean isPretty, String tenantIdentifier,
+                                                                     Callback<SavingsAccountWithdrawResponse> callback) throws IOException {
+        Call<SavingsAccountWithdrawResponse> call = savingsAccountInterface.withdraw(accountsId, withdrawRequest, isPretty, tenantIdentifier);
+        call.enqueue(callback);
+    }
 
     public SavingsAccountTransaction getSavingsAccountTransaction(Long accountsId, Long transactionId, boolean isPretty, String tenantIdentifier) throws IOException {
         SavingsAccountTransaction accountTransaction = null;
@@ -153,6 +233,14 @@ public class MifosService {
     }
 
 
+    public void getSavingsAccountTransactionAsync(Long accountsId, Long transactionId, boolean isPretty,
+                                                                  String tenantIdentifier,
+                                             Callback<SavingsAccountTransaction> callback) throws IOException {
+        Call<SavingsAccountTransaction> call = savingsAccountInterface.getTransaction(accountsId, transactionId, isPretty, tenantIdentifier);
+        call.enqueue(callback);
+    }
+
+
     public SavingsAccountTransactionUndoResponse undoSavingsAccountTransaction(Long accountsId, Long transactionId, boolean isPretty, String tenantIdentifier) throws IOException {
         SavingsAccountTransactionUndoResponse reversedTransaction = null;
         Call<SavingsAccountTransactionUndoResponse> call = savingsAccountInterface.undoSavingsAccountTransaction(accountsId, transactionId, isPretty, tenantIdentifier);
@@ -176,6 +264,25 @@ public class MifosService {
             }
         }
         return reversedTransaction;
+    }
+
+
+    /**
+     * This asynchronous method undo any savings account transacton given the
+     * following params.
+     * @param accountsId
+     * @param transactionId
+     * @param isPretty
+     * @param tenantIdentifier
+     * @param callback
+     * @throws IOException
+     */
+    public void undoSavingsAccountTransaction(Long accountsId, Long transactionId,
+                                                                               boolean isPretty,
+                                                                               String tenantIdentifier,
+                                              Callback<SavingsAccountTransactionUndoResponse> callback) throws IOException {
+        Call<SavingsAccountTransactionUndoResponse> call = savingsAccountInterface.undoSavingsAccountTransaction(accountsId, transactionId, isPretty, tenantIdentifier);
+        call.enqueue(callback);
     }
 
 
@@ -210,12 +317,21 @@ public class MifosService {
     }
 
 
-    public void repay(Long loanId,
+    public void disburseAsync(Long loanId,
+                                             LoanDisbursementRequest loanDisbursementRequest,
+                                             boolean isPretty,
+                                             String tenantIdentifier,
+                                                  Callback<LoanDisbursementResponse> callback) throws IOException {
+        Call<LoanDisbursementResponse> call = loanInterface.disburse(loanId, loanDisbursementRequest, isPretty, tenantIdentifier);
+        call.enqueue(callback);
+    }
+
+
+    public void repayLoanAsync(Long loanId,
                       LoanRepaymentRequest loanRepaymentRequest,
                       boolean isPretty,
                       String tenantIdentifier,
                       Callback<LoanRepaymentResponse> callback) throws IOException{
-        LoanRepaymentResponse repaymentResponse = null;
         Call<LoanRepaymentResponse> call = loanInterface.repay(loanId, loanRepaymentRequest, isPretty, tenantIdentifier);
         call.enqueue(callback);
 
@@ -258,25 +374,25 @@ public class MifosService {
         call.enqueue(callback);
     }
 
-    public void getLoanAccountAsync(String loanAccNo, boolean isPretty, String tenantIdentifier, Callback<Loan> callback) throws IOException{
-        Call<Loan> call = loanInterface.getLoanAccount(loanAccNo, isPretty, tenantIdentifier);
+    public void getLoanAccountAsync(String loanAccNo, boolean isPretty, String tenantIdentifier, Callback<LoanAccountSearchResult> callback) throws IOException{
+        Call<LoanAccountSearchResult> call = loanInterface.getLoanAccount(loanAccNo, isPretty, tenantIdentifier);
         call.enqueue(callback);
 
     }
 
 
     public Loan getLoanAccount(String loanAccNo, boolean isPretty, String tenantIdentifier) throws IOException{
-        Loan loanAccount = null;
-        Call<Loan> call = loanInterface.getLoanAccount(loanAccNo, isPretty, tenantIdentifier);
+        LoanAccountSearchResult result = null;
+        Call<LoanAccountSearchResult> call = loanInterface.getLoanAccount(loanAccNo, isPretty, tenantIdentifier);
 
-        Response<Loan> response = call.execute();
+        Response<LoanAccountSearchResult> response = call.execute();
 
         boolean isSuccessful = response.isSuccessful();
         int code = response.code();
         if (isSuccessful) {
-            loanAccount = response.body();
-            if (loanAccount != null) {
-                logger.info("- getLoanAccount({}, {}, {}) :Response [isSuccessful: {}, code: {}, accountTransaction: {}]", loanAccNo, isPretty, tenantIdentifier, isSuccessful, code, loanAccount);
+            result = response.body();
+            if (result != null) {
+                logger.info("- getLoanAccount({}, {}, {}) :Response [isSuccessful: {}, code: {}, accountTransaction: {}]", loanAccNo, isPretty, tenantIdentifier, isSuccessful, code, result);
             } else {
                 ResponseBody errorResponse = response.errorBody();
                 if (errorResponse != null) {
@@ -290,17 +406,80 @@ public class MifosService {
             }
         }
 
-        return loanAccount;
+        return result.pageItems.get(0);
 
     }
 
 
     public void getRecurringDepositAccountAsync(String depositAccNo, boolean isPretty,
                                                               String tenantIdentifier,
-                                                              Callback<RecurringDepositAccount> callback) throws IOException{
+                                                              Callback<List<RecurringDepositAccount>> callback) throws IOException{
 
-        Call<RecurringDepositAccount> call = savingsAccountInterface.getRecurringDepositAccount(depositAccNo, isPretty, tenantIdentifier);
+        Call<List<RecurringDepositAccount>> call = savingsAccountInterface.getRecurringDepositAccount(depositAccNo, isPretty, tenantIdentifier);
         call.enqueue(callback);
+    }
+
+    public void getSavingsAccountAsync(String accountNo,
+                                       boolean isPretty,
+                                       String tenantIdentifier,
+                                       Callback<SavingsAccountSearchResult> callback) throws IOException{
+        Call<SavingsAccountSearchResult> call = savingsAccountInterface.getSavingsAccount(accountNo, isPretty, tenantIdentifier);
+        call.enqueue(callback);
+    }
+
+
+    public SavingsAccount getSavingsAccount(String accountNo,
+                                            boolean isPretty,
+                                            String tenantIdentifier) throws IOException{
+        SavingsAccount savingsAccount = null;
+        Call<SavingsAccountSearchResult> call = savingsAccountInterface.getSavingsAccount(accountNo, isPretty, tenantIdentifier);
+
+        Response<SavingsAccountSearchResult> response = call.execute();
+
+        boolean isSuccessful = response.isSuccessful();
+        int code = response.code();
+        if (isSuccessful) {
+            savingsAccount = getSavingsAccountByAccountNo(response.body().pageItems, accountNo);
+            if (savingsAccount != null) {
+                logger.info("- getSavingsAccount({}, {}, {}) :Response [isSuccessful: {}, code: {}, accountTransaction: {}]", accountNo, isPretty, tenantIdentifier, isSuccessful, code, savingsAccount);
+            } else {
+                ResponseBody errorResponse = response.errorBody();
+                if (errorResponse != null) {
+                    logger.info("- getSavingsAccount({}, {}, {}, {}) :Response [isSuccessful: {}, code: {}, error: {}]", accountNo, isPretty, tenantIdentifier, isSuccessful, code, errorResponse.string());
+                }
+            }
+        }else {
+            ResponseBody errorResponse = response.errorBody();
+            if (errorResponse != null) {
+                logger.info("- getSavingsAccount({}, {}, {}, {}) :Response [isSuccessful: {}, code: {}, error: {}]", accountNo, isPretty, tenantIdentifier, isSuccessful, code, errorResponse.string());
+            }
+        }
+
+        return savingsAccount;
+    }
+
+
+    private SavingsAccount getSavingsAccountByAccountNo(List<SavingsAccount> savingsAccounts, String accountNo){
+        SavingsAccount account = null;
+        for(SavingsAccount savingsAccount: savingsAccounts){
+            if(savingsAccount.getAccountNo().equals(accountNo)){
+                account = savingsAccount;
+                break;
+            }
+        }
+        return account;
+    }
+
+
+    private RecurringDepositAccount getDepositAccountByAccountNo(List<RecurringDepositAccount> depositAccounts, String accountNo){
+        RecurringDepositAccount account = null;
+        for(RecurringDepositAccount depositAccount: depositAccounts){
+            if(depositAccount.getAccountNo().equals(accountNo)){
+                account = depositAccount;
+                break;
+            }
+        }
+        return account;
     }
 
 
@@ -308,14 +487,14 @@ public class MifosService {
                                                 String tenantIdentifier) throws IOException{
 
         RecurringDepositAccount depositAccount = null;
-        Call<RecurringDepositAccount> call = savingsAccountInterface.getRecurringDepositAccount(depositAccNo, isPretty, tenantIdentifier);
+        Call<List<RecurringDepositAccount>> call = savingsAccountInterface.getRecurringDepositAccount(depositAccNo, isPretty, tenantIdentifier);
 
-        Response<RecurringDepositAccount> response = call.execute();
+        Response<List<RecurringDepositAccount>> response = call.execute();
 
         boolean isSuccessful = response.isSuccessful();
         int code = response.code();
         if (isSuccessful) {
-            depositAccount = response.body();
+            depositAccount = getDepositAccountByAccountNo(response.body(), depositAccNo);
             if (depositAccount != null) {
                 logger.info("- getRecurringDepositAccount({}, {}, {}) :Response [isSuccessful: {}, code: {}, accountTransaction: {}]", depositAccNo, isPretty, tenantIdentifier, isSuccessful, code, depositAccount);
             } else {
